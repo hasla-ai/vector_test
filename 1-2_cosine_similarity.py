@@ -86,5 +86,44 @@ def main():
     print("내적은 벡터의 방향(구매 품목 조합)뿐만 아니라 크기(총 구매량)에도 정비례하므로, "
           "실제 구매 패턴이나 취향이 유사한 고객보다 단순히 헤비 슈머(대량 구매자)가 상위로 왜곡되어 선택되는 한계가 있습니다.\n")
 
+    #필수 2 : 구매 규모를 제외하고 "구매 성향"만 비교하기
+
+    # -------------------------------------------------------------
+    # [문제 2-1] 코사인 유사도를 공식으로 직접 구현하기
+    # -------------------------------------------------------------
+    # 1. 0번과 1번 고객의 코사인 유사도 계산
+    cos_a_b = cosine_similarity_single(a, b)
+
+    # 2. 검증 케이스 계산
+    cos_self = cosine_similarity_single(a, a)            # 자기 자신
+    cos_scaled = cosine_similarity_single(a, 3 * a)       # 스칼라배 (3 * a)
+    
+    # 직교 벡터 (a와 겹치지 않는 벡터 c) 생성
+    c = np.zeros_like(a)
+    c[a == 0] = 1.0  # a가 0인 성분에만 1 지정
+    cos_orthogonal = cosine_similarity_single(a, c)       # 직교 케이스
+
+    print("=== [1장-2강] 문제 2-1 출력 결과 ===")
+    print(f"1. 0번 고객과 1번 고객의 코사인 유사도 : {cos_a_b:.4f}")
+    print(f"2. 자기 자신과의 코사인 유사도 (a, a)   : {cos_self:.4f}")
+    print(f"3. 스칼라배와의 코사인 유사도 (a, 3*a)  : {cos_scaled:.4f}")
+    print(f"4. 직교 벡터와의 코사인 유사도 (a, c)   : {cos_orthogonal:.4f}\n")
+
+    print("=== [코사인 유사도 값 해석 정리] ===")
+    print("1.  1 : 두 벡터의 방향이 완전히 동일함 (구매 패턴/품목 비율이 완전히 일치).")
+    print("2.  0 : 두 벡터가 서로 직교함 (공통으로 구매한 품목이 전혀 없음).")
+    print("3. -1 : 두 벡터의 방향이 완전히 반대임 (음수 구매량이 없는 일반적 거래 데이터에서는 나타나지 않음).\n")
+
+# 코사인 유사도 직접 구현 함수
+def cosine_similarity_single(a, b):
+    norm_a = np.linalg.norm(a, 2)
+    norm_b = np.linalg.norm(b, 2)
+    
+    # 0으로 나누기 예방
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+        
+    return np.dot(a, b) / (norm_a * norm_b)
+
 if __name__ == "__main__":
     main()
