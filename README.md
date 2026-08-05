@@ -35,12 +35,38 @@ uv sync
 3. 스크립트 실행
 
 ```bash
-uv run vector_test.py
+uv run *(해당문제).py
 ```
 
 ---
 
-각각의 Quest & Outcome을 각각의 `*.md`로 정리했습니다.
+## 전체 흐름 및 예시가 된 프로덕트 ##
+
+
+##**1장 1강: 벡터·노름·정규화 (1)**##
+- 분야: 제조
+- 데이터셋(`dataset.py`): UCI Wine Quality
+- 사용 방식: `ucimlrepo.fetch_ucirepo(id=186)`
+- 출처: https://archive.ics.uci.edu/dataset/186/wine+quality
+
+ - 제조 품질: 와인 제조사 품질관리팀은 생산 샘플마다 산도·당도·알코올 같은 이화학 값을 여러 개 측정해 기록합니다. 값이 여러 개이므로 샘플 하나를 숫자 하나로는 표현할 수 없고, "측정값 묶음" 단위로 다뤄야 합니다. 와인 샘플별 이화학 측정값(산도, 당도, 알코올 등)을 특성 벡터로 보고 노름과 정규화를 계산합니다.
+
+
+##**1장 2강: 내적과 코사인 유사도(1)**##
+- 분야: 이커머스
+- 데이터셋(`dataset2.py`): UCI Online Retail
+- 사용 방식: `ucimlrepo.fetch_ucirepo(id=352)`
+- 출처: https://archive.ics.uci.edu/dataset/352/online+retail
+- 사용 목적: `CustomerID`, `StockCode`, `Quantity` 컬럼으로 고객-상품 구매량 행렬을 만들어 내적·코사인 유사도를 계산합니다.
+
+- 프로덕트: 유사 고객 기반 추천 후보 도출하기 머신
+  - 고객과 코사인 유사도가 가장 높은 이웃 고객 1명을 선택하고 추천 점수를 만들어낸 뒤(기준 고객이 **이미 구매한 상품은 후보에서 제외**), 점수 상위 10개(후보가 10개 미만이면 전부)를 출력하여 추천하는 기능 구현.
+
+
+
+
+
+각각의 Quest & Outcome을 각각의 `*.md`로 정리하여 확인하실 수 있습니다.
 
 다음은 예시로, 1장 1강에 대한 풀이를 정리한 내용입니다(`1-1_quest_and_outcome.md`).
 

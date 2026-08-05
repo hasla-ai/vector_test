@@ -154,6 +154,41 @@ def main():
     print("코사인 유사도는 벡터의 길이를 L2 노름으로 정규화하여 총 구매량(규모) 차이를 제거하고 "
           "순수한 구매 품목 비율(방향)만 비교하므로, 대량 구매자와 소량 구매자 간의 취향 유사성을 왜곡 없이 파악하는 데 적합합니다.\n")    
 
+    # -------------------------------------------------------------
+    # [문제 3-1] 유사 고객 기반 추천 후보 도출하기
+    # -------------------------------------------------------------
+    # 1. 코사인 유사도가 가장 높은 이웃 고객 1명 선택
+    neighbor_id = top_5_except_self_cos.index[0]
+    neighbor_sim = top_5_except_self_cos.iloc[0]
+
+    # 2. 기준 고객 및 이웃 고객의 구매량 벡터: 추천 점수로 사용.
+    target_vector = M_df.loc[target_customer_id]
+    neighbor_vector = M_df.loc[neighbor_id]
+
+    # 3. 기준 고객이 아직 구매하지 않은 상품 (구매량 == 0) 중, 이웃 고객은 구매한 상품 (구매량 > 0) 필터링
+    unpurchased_mask = (target_vector == 0)
+    neighbor_purchased_mask = (neighbor_vector > 0)
+
+    recommend_candidates = neighbor_vector[unpurchased_mask & neighbor_purchased_mask].sort_values(ascending=False)
+
+    # 4. 상위 10개 (10개 미만이면 전체) 추출
+    top_10_candidates = recommend_candidates.head(10)
+
+    df_recommendations = pd.DataFrame({
+        "StockCode (상품 코드)": top_10_candidates.index,
+        "추천 점수 (이웃 구매량)": top_10_candidates.values
+    })
+
+    print("=== [1장-2강] 문제 3-1 출력 결과 ===")
+    print(f"1. 선택된 이웃 고객 ID: {neighbor_id} (코사인 유사도: {neighbor_sim:.4f})")
+    print(f"2. 유효 추천 후보 상품 개수: {len(recommend_candidates)} 개\n")
+    print(f"3. 추천 후보 상품 및 점수 (상위 최대 10개):")
+    print(df_recommendations.to_string(index=False))
+
+    print("\n=== [임베딩 기반 유사도 검색과의 원리 연결 설명] ===")
+    print("질문(기준 고객) 벡터를 고차원 벡터 공간에 매핑한 뒤 코사인 유사도로 가장 가까운 문서(이웃 고객) 벡터를 검색하고, "
+          "해당 문서의 핵심 정보(미구매 상품)를 결과로 추출하는 흐름이 임베딩 검색(k-NN Nearest Neighbor)과 완벽히 동일한 원리입니다.\n")
+
 # 코사인 유사도 직접 구현 함수
 def cosine_similarity_single(a, b):
     norm_a = np.linalg.norm(a, 2)
