@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity  # sklearn의 cosin_similarity 함수
 from dataset2 import get_retail_data
 
 
@@ -113,6 +114,45 @@ def main():
     print("1.  1 : 두 벡터의 방향이 완전히 동일함 (구매 패턴/품목 비율이 완전히 일치).")
     print("2.  0 : 두 벡터가 서로 직교함 (공통으로 구매한 품목이 전혀 없음).")
     print("3. -1 : 두 벡터의 방향이 완전히 반대임 (음수 구매량이 없는 일반적 거래 데이터에서는 나타나지 않음).\n")
+
+    # -------------------------------------------------------------
+    # [문제 2-2] 유사 고객 상위 5명 찾기
+    # -------------------------------------------------------------
+    # 1. 전체 고객 간 유사도 행렬 계산 및 shape 확인
+    cos_sim_matrix = cosine_similarity(M)
+    
+    # 2. 고객 ID를 인덱스 및 컬럼으로 하는 DataFrame 생성
+    cos_sim_df = pd.DataFrame(
+        cos_sim_matrix, 
+        index=M_df.index, 
+        columns=M_df.index
+    )
+
+    # 0번 고객 ID
+    target_customer_id = M_df.index[0]
+    
+    # 3. 0번 고객 기준 유사도 상위 5명 추출 (자기 자신 제외)
+    target_cos_series = cos_sim_df.loc[target_customer_id].sort_values(ascending=False)
+    top_5_except_self_cos = target_cos_series.iloc[1:6]
+
+    df_top_5_cos = pd.DataFrame({
+        "Customer_ID": top_5_except_self_cos.index,
+        "코사인 유사도": np.round(top_5_except_self_cos.values, 4),
+        "총 구매량": total_quantities.loc[top_5_except_self_cos.index].values
+    })
+
+    print("=== [1장-2강] 문제 2-2 출력 결과 ===")
+    print(f"1. 코사인 유사도 행렬 shape: {cos_sim_matrix.shape}")
+    print(f"\n2. 0번 고객({target_customer_id}) 기준 코사인 유사도 상위 5명 (자기 자신 제외):")
+    print(df_top_5_cos.to_string(index=False))
+
+    print("\n3. 문제 1-2 내적 기준 상위 5명과의 비교:")
+    print("   - 내적 상위 목록     :", list(df_top_5["Customer_ID"]))
+    print("   - 코사인 유사도 상위 목록:", list(df_top_5_cos["Customer_ID"]))
+
+    print("\n=== [지표 선택 근거 (지표 선택 이유)] ===")
+    print("코사인 유사도는 벡터의 길이를 L2 노름으로 정규화하여 총 구매량(규모) 차이를 제거하고 "
+          "순수한 구매 품목 비율(방향)만 비교하므로, 대량 구매자와 소량 구매자 간의 취향 유사성을 왜곡 없이 파악하는 데 적합합니다.\n")    
 
 # 코사인 유사도 직접 구현 함수
 def cosine_similarity_single(a, b):
