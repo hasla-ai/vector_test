@@ -1,57 +1,30 @@
-# 최초 1회만 실행 (새 환경일 때)
-
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
+from dataset import get_wine_data
 
+# 공통 난수 시드 설정
 RANDOM_STATE = 42
 np.random.seed(RANDOM_STATE)
 
+def main():
+    # 1. 공통 모듈에서 데이터 로드
+    X, y = get_wine_data()
 
-def _fallback(reason):
-    """UCI 데이터를 쓸 수 없을 때 대체 데이터셋을 반환합니다."""
-    print(f'[경고] {reason}')
-    print('[경고] UCI Wine Quality를 불러오지 못해 다른 데이터셋(sklearn wine)으로 대체됩니다.')
-    print('[경고] 따라서 아래 출력값은 교안의 예시 값과 다르게 나옵니다. 계산·해석 방법은 동일합니다.')
-    from sklearn.datasets import load_wine
-    data = load_wine(as_frame=True)
-    return data.data, data.target
+    # 2. 첫 번째 샘플의 측정값을 v1(NumPy 배열)로 추출
+    v1 = X.iloc[0].to_numpy()
 
+    # 3. v1의 첫 번째 원소 추출 (스칼라)
+    s1 = v1[0]
 
-def load_uci(dataset_id):
-    """UCI에서 데이터를 불러오고, 실패 원인(설치/네트워크)을 구분해 안내합니다."""
-    try:
-        from ucimlrepo import fetch_ucirepo
-    except ImportError:
-        return _fallback('ucimlrepo 패키지가 설치되어 있지 않습니다. uv add ucimlrepo를 먼저 실행하세요.')
+    # --- 출력 결과 ---
+    print("=== [1장-1강-필수1] 문제 1-1 출력 결과 ===")
+    print(f"1. 전체 데이터 표 (행렬, X) shape: {X.shape}")
+    print(f"2. 첫 번째 샘플 (특성 벡터, v1) shape: {v1.shape}")
+    print(f"3. v1의 첫 번째 원소 (스칼라, s1) 값: {s1} (특성명: {X.columns[0]})\n")
 
-    try:
-        ds = fetch_ucirepo(id=dataset_id)
-    except Exception as e:
-        return _fallback(f'UCI 서버 접속에 실패했습니다(네트워크·방화벽 확인 필요): {e}')
-
-    X, y = ds.data.features.copy(), ds.data.targets.copy()
-    if isinstance(y, pd.DataFrame) and y.shape[1] == 1:
-        y = y.iloc[:, 0]  # 컬럼 1개짜리 DataFrame -> Series
-    return X, y
-
-
-def numeric_frame(X):
-    """수치형 컬럼만 남기고 결측값을 중앙값으로 채웁니다."""
-    Xn = X.select_dtypes(include='number').copy()
-    Xn = Xn.replace([np.inf, -np.inf], np.nan)
-    return Xn.fillna(Xn.median(numeric_only=True))
-
+    print("=== [세 대상의 역할 구분 설명] ===")
+    print("1. 데이터 행렬 (X): 전체 와인 샘플과 이화학 측정값을 통합 관리하는 2차원 공간입니다.")
+    print("2. 특성 벡터 (v1): 와인 1개 샘플의 다차원 이화학 측정값 묶음으로, 데이터 공간에서 개별 와인의 위치를 정의합니다.")
+    print("3. 스칼라 (s1): 산도(fixed_acidity)와 같은 단일 항목 수치로, 특성 벡터를 구성하는 개별 속성값입니다.")
 
 if __name__ == "__main__":
-    # Wine Quality (ID: 186) 로드 및 전처리
-    X_raw, y_raw = load_uci(186)
-    X = numeric_frame(X_raw)
-
-    print("=== 데이터 로드 결과 ===")
-    print('데이터 shape:', X.shape)
-    print('\n수치형 특성(Feature) 목록:')
-    print(list(X.columns))
-    print('\n상위 3개 행 데이터:')
-    print(X.head(3))
+    main()
