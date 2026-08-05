@@ -4,6 +4,7 @@
 ## 필수2. 샘플별 측정값의 "크기"를 하나의 숫자로 요약하기
 
 import numpy as np
+import pandas as pd
 from dataset import get_wine_data
 
 # 공통 난수 시드 설정
@@ -88,5 +89,33 @@ def main():
           "L2 노름은 제곱합의 제곱근으로 기하학적 직선 거리를 반영하며, "
           "L∞ 노름은 성분 중 가장 큰 최대 절대값을 집중적으로 반영합니다.\n")
 
+    # -------------------------------------------------------------
+    # [문제 2-2] 정규화로 단위벡터 만들기
+    # -------------------------------------------------------------
+    # 1. v1을 L2 노름으로 나누어 단위벡터 u1 생성
+    u1 = v1 / np.linalg.norm(v1, 2)
+    u1_l2_norm = np.linalg.norm(u1, 2)
+
+    print("=== [1장-1강-필수2] 문제 2-2 출력 결과 ===")
+    print(f"1. 단위벡터 u1의 L2 노름: {u1_l2_norm:.4f} (1.0 일치 여부: {np.isclose(u1_l2_norm, 1.0)})\n")
+
+    # 2. 앞 5개 샘플을 골라 정규화 전후 L2 노름 비교 표 작성
+    first_5_df = X.iloc[:5]
+    first_5 = first_5_df.to_numpy()
+
+    before_norms = [np.linalg.norm(v, 2) for v in first_5]
+    after_norms = [np.linalg.norm(v / np.linalg.norm(v, 2), 2) for v in first_5]
+
+    df_comparison = pd.DataFrame({
+        "샘플(ID)": first_5_df.index,
+        "정규화 전 L2 노름": before_norms,
+        "정규화 후 L2 노름": after_norms
+    })
+
+    print("2. 앞 5개 샘플의 정규화 전후 노름 비교 표:")
+    print(df_comparison.to_string(index=False))
+    print("\n=== [정규화의 의미 설명] ===")
+    print("정규화는 벡터의 방향(각 성분 간 상대적 비율)을 유지하면서, 크기(L2 노름)를 항상 1로 통일하여 크기 차이에 따른 왜곡 없이 순수한 성분 조합 형태를 비교할 수 있게 합니다.\n")
+    
 if __name__ == "__main__":
     main()
