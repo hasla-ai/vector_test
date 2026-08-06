@@ -54,6 +54,51 @@ def main():
         "대각행렬 D를 우측에서 곱하면(A @ D), A의 각 열(특성 축)이 D의 대응하는 대각 원소값만큼 독립적으로 스케일링(확대/축소)됩니다."
     )
 
+    # -------------------------------------------------------------
+    # [문제 1-2] 데이터에서 대칭행렬 찾기
+    # -------------------------------------------------------------
+
+    print("=== [1장-4강] 문제 1-2 출력 결과 ===")
+
+    # 1. G = X.T @ X 계산 및 Shape 확인
+    G = X.T @ X
+
+    print("[행렬 X] 앞 4행")
+    print(np.round(X[:4], 4))
+
+    print("[행렬 X.T]")
+    print(np.round(X.T[:4], 4))
+    
+    print("[행렬 G = X.T @ X]")
+    print(np.round(G[:4], 4))
+
+    print("[행렬 G.T]")
+    print(np.round(G.T, 4))
+
+    print("[행렬 G.T@G]")
+    print(np.round(G.T@G, 4))
+
+
+    # 2. G의 대칭 여부 확인 (G == G.T)
+    is_G_symmetric = np.allclose(G, G.T)
+
+    # 3. 공분산 행렬 계산 및 대칭 여부 확인
+    cov_matrix = np.cov(X, rowvar=False)
+    is_cov_symmetric = np.allclose(cov_matrix, cov_matrix.T)
+
+    # 4. 결과 출력
+    print(f"G (X.T @ X) shape   : {G.shape}")
+    print(f"공분산 행렬 shape   : {cov_matrix.shape}\n")
+
+    print(f"G의 대칭 여부 (np.allclose)       : {is_G_symmetric}")
+    print(f"공분산 행렬 대칭 여부 (np.allclose) : {is_cov_symmetric}\n")
+
+    # 5. 공분산 행렬이 대칭인 이유 설명
+    print("=== 공분산 행렬이 대칭인 이유 ===")
+    print(
+        "변수 i와 변수 j 사이의 공분산 Cov(X_i, X_j)는 변수 j와 변수 i 사이의 공분산 Cov(X_j, X_i)와 수학적으로 완벽히 동일하므로, (i, j) 위치와 (j, i) 위치의 원소가 항상 같은 대칭행렬이 됩니다."
+    )
+
 
 if __name__ == "__main__":
     main()
