@@ -130,6 +130,60 @@ def main():
         title="Projection Transformation (P)",
     )
 
+    # 필수 2: 회전과 합성 변환, 그리고 순서 문제
+    # -------------------------------------------------------------
+    # [문제 2-1] 회전 행렬 만들고 적용하기
+    # -------------------------------------------------------------
+    print("=== [2장-1강] 문제 2-1 출력 결과 ===")
+
+    # 1. 45도 회전 행렬 R 정의 (deg2rad 적용)
+    theta = np.deg2rad(45)
+    R = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+
+    # 2. 검증용 벡터 (1, 0) 회전 적용
+    v = np.array([1.0, 0.0])
+    v_rot = apply_T(R, v)
+
+    print("--- [1] 검증용 벡터 (1, 0) 회전 결과 ---")
+    print(f"회전 전 벡터 v      : {v}")
+    print(
+        f"45도 회전 후 벡터   : [{v_rot[0]:.4f}, {v_rot[1]:.4f}] (목표값: [0.7071, 0.7071])\n"
+    )
+
+    # 3. 데이터 X2 전체에 회전 적용
+    X2_rotated = apply_T(R, X2)
+
+    # 4. 회전 전후 원점까지의 거리(L2 노름) 보존 확인
+    norm_before = np.linalg.norm(X2, axis=1)
+    norm_after = np.linalg.norm(X2_rotated, axis=1)
+    is_norm_preserved = np.allclose(norm_before, norm_after)
+
+    print("--- [2] 거리(L2 노름) 보존 여부 검증 ---")
+    print(f"회전 전후 원점과의 거리 유지 여부 : {is_norm_preserved}\n")
+
+    # 5. RᵀR 계산 및 직교행렬(Orthogonal Matrix) 확인
+    R_T_R = R.T @ R
+    is_identity = np.allclose(R_T_R, np.eye(2))
+
+    print("--- [3] RᵀR 연산 및 단위행렬 검증 ---")
+    print(f"RᵀR 계산 결과 :\n{np.round(R_T_R, 4)}")
+    print(f"RᵀR == I (단위행렬) 성립 여부 : {is_identity}\n")
+
+    # 6. RᵀR = I 의 의미 설명
+    print("=== RᵀR = I 의 의미 설명 ===")
+    print(
+        "회전 행렬 R은 전치행렬이 곧 역행렬(Rᵀ = R⁻¹) 역할을 하는 직교행렬(Orthogonal Matrix)이며, 이는 공간 변환 시 벡터 간의 각도와 원점으로부터의 길이를 완벽히 보존하는 강체 변환(Rigid Transformation)임을 의미합니다."
+    )
+
+    # 7. 시각화 출력
+    print("\n[안내] 45도 회전 변환 전후 비교 산점도 창을 띄웁니다.")
+    plot_pair(
+        X2,
+        X2_rotated,
+        label_after="rotated (45 deg)",
+        title="Rotation Transformation (R_45)",
+    )
+
 
 if __name__ == "__main__":
     main()
