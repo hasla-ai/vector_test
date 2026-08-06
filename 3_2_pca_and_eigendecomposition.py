@@ -1,15 +1,32 @@
-﻿
+﻿import os
 import numpy as np
 import pandas as pd
+import platform
+import logging
 import matplotlib.pyplot as plt
 from numpy.linalg import inv, det, matrix_rank, cond
 from sklearn.decomposition import PCA
 
 from dataset_3_2 import X_df, Xs, y_raw, DATA_SOURCE
 
+# Matplotlib의 font_manager 경고 로그 숨기기 (경고 메시지 완전히 제거)
+logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
+
+# 현재 OS에 맞는 폰트 자동 지정
+os_name = platform.system()
+if os_name == 'Windows':
+    plt.rcParams['font.family'] = 'Malgun Gothic'    # 맑은 고딕
+elif os_name == 'Darwin':                            # macOS
+    plt.rcParams['font.family'] = 'AppleGothic'     # 애플고딕
+else:                                                # Linux / Colab
+    plt.rcParams['font.family'] = 'NanumGothic'     # 나눔고딕
+
+plt.rcParams['axes.unicode_minus'] = False          # 마이너스 기호 깨짐 방지
+
 RANDOM_STATE = 42
 np.random.seed(RANDOM_STATE)
 
+plt.rcParams['axes.unicode_minus'] = False
 # =========================================================
 # [문제 1-1] A = PDP⁻¹ 구성하고 복원하기
 # =========================================================
@@ -134,10 +151,18 @@ def run_problem_2_1():
     return Z_manual, evecs_sorted, exp_var_ratio
 
 # =========================================================
-# [문제 2-2] sklearn PCA와 결과 비교하기
+# [문제 2-2] sklearn PCA와 결과 비교하기 (독립 실행 가능하도록 수정)
 # =========================================================
-def run_problem_2_2(Z_manual, evecs_manual):
+def run_problem_2_2(Z_manual=None, evecs_manual=None):
     print("=== [문제 2-2] sklearn PCA와 결과 비교하기 ===")
+
+    # 전달받은 값이 없을 경우 내부에서 직접 계산 (NameError 방지)
+    if Z_manual is None or evecs_manual is None:
+        cov_matrix = np.cov(Xs, rowvar=False)
+        evals, evecs = np.linalg.eigh(cov_matrix)
+        sort_idx = np.argsort(evals)[::-1]
+        evecs_manual = evecs[:, sort_idx]
+        Z_manual = Xs @ evecs_manual[:, :2]
 
     # 1. sklearn PCA 적용 (n_components=2)
     pca_2 = PCA(n_components=2, random_state=RANDOM_STATE)
@@ -179,7 +204,8 @@ def run_problem_2_2(Z_manual, evecs_manual):
     print("\n3. 전체 주성분별 부호 비교 표")
     print(df_sign.to_string(index=False))
 
-    # 5. 2D 산점도 그리기
+    # 5. 2D 산점도 시각화
+    save_path = os.path.join('./images', 'chapter_3_2_problem_2_2_pca_and_eigendecomposition.png')
     plt.figure(figsize=(7, 5))
     scatter = plt.scatter(Z_sklearn[:, 0], Z_sklearn[:, 1], c=y_raw, cmap='viridis', alpha=0.8, edgecolors='k', s=40)
     plt.colorbar(scatter, label='Target / Quality')
@@ -188,15 +214,11 @@ def run_problem_2_2(Z_manual, evecs_manual):
     plt.ylabel('PC2')
     plt.grid(True, linestyle=':', alpha=0.6)
     plt.tight_layout()
-    plt.savefig('pca_2d_scatter.png', dpi=150)
+    plt.savefig(save_path, dpi=150)
     plt.close()
 
     print("\n4. 시각화")
-    print("• 2D 산점도 저장 완료: pca_2d_scatter.png")
-    print(
-        "• 부호 반전 이유: 고유벡터 v와 -v는 동일한 축 방향을 정의하므로 "
-        "알고리즘 구현 방식(SVD/Eigen)에 따라 부호가 반전될 수 있습니다.\n"
-    )
-    
+    print("• 2D 산점도 저장 완료: chapter_3_2_problem_2_2_pca_and_eigendecomposition.png\n")
+
 if __name__ == "__main__":
-    run_problem_2_1()
+    run_problem_2_2()
