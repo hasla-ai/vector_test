@@ -78,6 +78,57 @@ def run_problem_1_2():
     meaning = "역행렬을 복잡한 연산으로 따로 구하지 않고 전치(Qᵀ)만으로 원래 좌표를 되돌릴 수 있어 계산이 빠르고 수치적으로 안정적입니다."
     print(f"\n5. 직교행렬의 장점: {meaning}\n")
 
+
+# =========================================================
+# [문제 2-1] 정규방정식으로 회귀계수 계산하기
+# =========================================================
+def run_problem_2_1():
+    print("=" * 60)
+    print("[문제 2-1] 정규방정식으로 회귀계수 계산하기")
+    print("=" * 60)
+
+    # 1. 정규방정식 공식: x̂ = (XᵀX)⁻¹Xᵀy
+    coef_formula = np.linalg.inv(Xd.T @ Xd) @ Xd.T @ y
+
+    # 2. np.linalg.lstsq
+    coef_lstsq, _, _, _ = np.linalg.lstsq(Xd, y, rcond=None)
+
+    # 3. sklearn LinearRegression (fit_intercept=False)
+    lr = LinearRegression(fit_intercept=False)
+    lr.fit(Xd, y)
+    coef_sklearn = lr.coef_
+
+    # 노름 차이 비교
+    diff_1 = np.linalg.norm(coef_formula - coef_lstsq)
+    diff_2 = np.linalg.norm(coef_formula - coef_sklearn)
+
+    # RMSE 계산
+    rmse_formula = np.sqrt(mean_squared_error(y, Xd @ coef_formula))
+    rmse_lstsq = np.sqrt(mean_squared_error(y, Xd @ coef_lstsq))
+    rmse_sklearn = np.sqrt(mean_squared_error(y, Xd @ coef_sklearn))
+
+    df_coef = pd.DataFrame({
+        '정규방정식': coef_formula,
+        'lstsq': coef_lstsq,
+        'sklearn': coef_sklearn
+    })
+    print("1. 세 방식의 회귀계수 비교:")
+    print(np.round(df_coef, 5))
+
+    print(f"\n2. 계수 간 차이(노름):")
+    print(f"   • 정규방정식 vs lstsq: {diff_1:.2e}")
+    print(f"   • 정규방정식 vs sklearn: {diff_2:.2e}")
+
+    df_rmse = pd.DataFrame({
+        '방식': ['정규방정식', 'np.linalg.lstsq', 'sklearn LinearRegression'],
+        'RMSE': [rmse_formula, rmse_lstsq, rmse_sklearn]
+    })
+    print("\n3. 세 방식의 RMSE 비교 표:")
+    print(df_rmse.to_string(index=False))
+
+    meaning = "세 방식 모두 오차 제곱합을 최소화하는 동일한 수학적 대상(최소제곱 문제)을 풀기 때문에 회귀계수와 RMSE가 사실상 동일합니다."
+    print(f"\n4. 결과가 동일한 이유: {meaning}\n")
+
 if __name__ == "__main__":
-    run_problem_1_2()
+    run_problem_2_1()
 
