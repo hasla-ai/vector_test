@@ -98,5 +98,39 @@ def run_problem_1_2():
         "행렬 (A - λI)의 역행렬이 없어야 하므로 행렬식 det(A - λI) = 0을 만족하는 λ가 고유값이 됩니다.\n"
     )
 
+# =========================================================
+# [문제 2-1] 공분산행렬 고유분해하기
+# =========================================================
+def run_problem_2_1():
+    print("=== [문제 2-1] 공분산행렬 고유분해하기 ===")
+
+    # 1. 대칭행렬 확인
+    is_sym = np.allclose(cov, cov.T)
+    print(f"1. 공분산행렬 대칭 여부 (np.allclose) : {is_sym}\n")
+
+    # 2 & 3. eigh로 고유분해 후 내림차순 정렬
+    evals, evecs = np.linalg.eigh(cov)
+    sort_idx = np.argsort(evals)[::-1]
+    evals_sorted = evals[sort_idx]
+    evecs_sorted = evecs[:, sort_idx]
+
+    # 4. 상위 5개 고유값 및 전체 합
+    print("2. 정렬된 상위 5개 고유값 및 합계")
+    print(f"• 상위 5개 고유값 : {np.round(evals_sorted[:5], 4)}")
+    print(f"• 전체 고유값 합계: {np.sum(evals_sorted):.4f} (특성 수 30개와 동일)\n")
+
+    # 5. 실수 및 비음수 여부 및 성질 설명
+    is_real = np.all(np.isreal(evals_sorted))
+    is_non_neg = np.all(evals_sorted >= -1e-10)
+
+    print("3. 고유값 성질 검증")
+    print(f"• 모든 고유값이 실수인가?   : {is_real}")
+    print(f"• 모든 고유값이 0 이상인가? : {is_non_neg}")
+    print(
+        "• 성질 설명: 공분산행렬은 대칭행렬이므로 고유값이 항상 실수이며, "
+        "준양정치(Positive Semi-definite) 행렬이므로 고유값이 각 축의 분산을 의미하여 항상 0 이상입니다.\n"
+    )
+
 if __name__ == "__main__":
-    run_problem_1_2()
+    run_problem_2_1()
+    
