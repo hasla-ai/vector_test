@@ -72,10 +72,58 @@ print("\n[설명 1-2-5] 정규직교 기저 U, V와 모든 특이값을 사용�
 # ==========================================
 # 필수 2 : 특이값은 어디에서 오는가
 # ==========================================
-
 # ==========================================
 # 문제 2-1 : 특이값과 AᵀA 고유값의 관계 확인하기
 # ==========================================
+
+print("\n" + "="*50)
+print("[필수 2] 문제 2-1: 특이값과 M^T M 고유값의 관계")
+print("="*50)
+
+# 1. M^T M 계산 및 대칭성 확인
+MTM = M.T @ M
+is_symmetric = np.allclose(MTM, MTM.T)
+print(f"M^T M 이 대칭행렬인가? {is_symmetric}")
+
+# 2, 3, 4. 고유값 계산 및 특이값 비교
+eigvals = np.linalg.eigvalsh(MTM)
+eigvals_sorted = np.sort(eigvals)[::-1]
+sqrt_eigvals = np.sqrt(np.clip(eigvals_sorted, 0, None))
+
+df_comp = pd.DataFrame({
+    'Eigenvalue Sqrt': sqrt_eigvals[:5],
+    'Singular Value (S)': S[:5],
+    'Diff': np.abs(sqrt_eigvals[:5] - S[:5])
+})
+print("\n[상위 5개 비교 표]")
+print(df_comp.to_string(index=False))
+print(f"전체 최대 차이: {np.max(np.abs(sqrt_eigvals - S)):.12e}")
+
+# 5. clip 적용 이유 설명
+print("\n[설명 2-1-5] 수치 계산 시 0에 가까운 고유값이 오차로 인해 -1e-16 등 미세한 음수가 될 수 있으며, 이에 np.sqrt를 적용할 때 발생하는 nan 오류를 방지하기 위해 clip을 사용합니다.")
+
+# 6, 7. 랭크 결손 행렬 R 실험
+rng = np.random.default_rng(42)
+C = rng.normal(size=(60, 5))
+P = rng.normal(size=(5, 40))
+R = C @ P
+
+RTR = R.T @ R
+eig_RTR = np.sort(np.linalg.eigvalsh(RTR))[::-1]
+
+neg_eigs = eig_RTR[eig_RTR < 0]
+print(f"\n랭크 결손 행렬 R의 rank: {np.linalg.matrix_rank(R)}")
+print(f"R^T R 의 음수 고유값 개수: {len(neg_eigs)}개 (예: {neg_eigs[0] if len(neg_eigs)>0 else 0:.2e})")
+
+# clip 없이 vs clip 적용 np.sqrt
+with np.errstate(invalid='ignore'):
+    sqrt_no_clip = np.sqrt(eig_RTR)
+nan_count_no_clip = np.isnan(sqrt_no_clip).sum()
+sqrt_with_clip = np.sqrt(np.clip(eig_RTR, 0, None))
+nan_count_with_clip = np.isnan(sqrt_with_clip).sum()
+
+print(f"clip 미적용 시 nan 개수: {nan_count_no_clip}")
+print(f"clip 적용 시 nan 개수: {nan_count_with_clip}")
 
 # ==========================================
 # 문제 2-2 : 고유분해와 SVD의 적용 범위 비교하기
