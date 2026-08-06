@@ -220,5 +220,65 @@ def run_problem_2_2(Z_manual=None, evecs_manual=None):
     print("\n4. 시각화")
     print("• 2D 산점도 저장 완료: chapter_3_2_problem_2_2_pca_and_eigendecomposition.png\n")
 
+# =========================================================
+# [문제 3-1] 누적 설명분산비로 차원 수 결정하기
+# =========================================================
+def run_problem_3_1():
+    print("=== [문제 3-1] 누적 설명분산비로 차원 수 결정하기 ===")
+
+    pca_full = PCA(random_state=RANDOM_STATE)
+    pca_full.fit(Xs)
+    exp_var = pca_full.explained_variance_ratio_
+    cum_var = np.cumsum(exp_var)
+    n_features = Xs.shape[1]
+
+    # images/ 하위 폴더에 누적 설명분산비 그래프 저장
+    save_path = os.path.join('./images', 'chapter_3_2_problem_3_1_pca_cumulative_variance.png')
+    plt.figure(figsize=(8, 4.5))
+    plt.plot(range(1, n_features + 1), cum_var, marker='o', linestyle='-', color='b', label='Cumulative Variance')
+    plt.axhline(y=0.90, color='r', linestyle='--', label='90% Threshold')
+    plt.title('Cumulative Explained Variance Ratio')
+    plt.xlabel('Number of Components')
+    plt.ylabel('Cumulative Variance Ratio')
+    plt.xticks(range(1, n_features + 1))
+    plt.grid(True, linestyle=':', alpha=0.6)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150)
+    plt.close()
+    print(f"1. 누적 설명분산비 그래프 저장 완료: {save_path}\n")
+
+    thresholds = [0.80, 0.90, 0.95]
+    res_list = []
+
+    for th in thresholds:
+        k = np.argmax(cum_var >= th) + 1
+        reduction_rate = (1 - (k / n_features)) * 100
+        res_list.append({
+            "목표 설명분산비": f"{int(th*100)}%",
+            "필요 주성분 개수": f"{k}개",
+            "차원 축소율": f"{reduction_rate:.1f}%"
+        })
+
+    df_res = pd.DataFrame(res_list)
+    print("2. 기준별 필요 주성분 개수 및 축소율 표")
+    print(df_res.to_string(index=False))
+
+    pca_raw = PCA(random_state=RANDOM_STATE)
+    pca_raw.fit(X_df)
+    pc1_raw_ratio = pca_raw.explained_variance_ratio_[0]
+    pc1_std_ratio = exp_var[0]
+
+    print(f"\n3. 표준화 여부에 따른 PC1 설명분산비 비교")
+    print(f"• 표준화 후 (Xs) PC1 설명분산비   : {pc1_std_ratio:.4f}")
+    print(f"• 표준화 전 (X_df) PC1 설명분산비 : {pc1_raw_ratio:.4f}")
+
+    print("\n4. 차원 축소 기준치 선택 시 고려 사항")
+    print(
+        "비표준화 데이터는 스케일이 큰 특정 변수가 분산을 독점하여 PC1 설명분산비가 왜곡됩니다. "
+        "목적에 따라 시각화는 2~3개 축을 고정 사용하고, 예측 모델링에서는 90~95%의 정보를 보존하도록 "
+        "주성분 개수를 선택해야 합니다.\n"
+    )
+
 if __name__ == "__main__":
-    run_problem_2_2()
+    run_problem_3_1()
