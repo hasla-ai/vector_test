@@ -133,5 +133,70 @@ def run_problem_2_1():
 
     return Z_manual, evecs_sorted, exp_var_ratio
 
+# =========================================================
+# [문제 2-2] sklearn PCA와 결과 비교하기
+# =========================================================
+def run_problem_2_2(Z_manual, evecs_manual):
+    print("=== [문제 2-2] sklearn PCA와 결과 비교하기 ===")
+
+    # 1. sklearn PCA 적용 (n_components=2)
+    pca_2 = PCA(n_components=2, random_state=RANDOM_STATE)
+    Z_sklearn = pca_2.fit_transform(Xs)
+
+    # 2. 설명분산비 비교
+    print("1. 설명분산비 비교")
+    print("• sklearn 설명분산비:", np.round(pca_2.explained_variance_ratio_, 4))
+
+    # 3. 절댓값 기준 주성분 방향 및 투영 결과 비교
+    vecs_match = np.allclose(np.abs(pca_2.components_), np.abs(evecs_manual[:, :2].T))
+    z_match = np.allclose(np.abs(Z_sklearn), np.abs(Z_manual))
+
+    print("\n2. 절댓값 기준 일치 여부")
+    print("• 주성분 방향(고유벡터) 절댓값 일치 여부:", vecs_match)
+    print("• 투영 결과(Z) 절댓값 일치 여부:", z_match)
+
+    # 4. 전체 주성분 부호 비교 표 작성
+    pca_full = PCA(random_state=RANDOM_STATE)
+    pca_full.fit(Xs)
+
+    sign_checks = []
+    for i in range(Xs.shape[1]):
+        sk_v = pca_full.components_[i]
+        mn_v = evecs_manual[:, i]
+
+        is_same_sign = np.allclose(sk_v, mn_v)
+        is_opp_sign = np.allclose(sk_v, -mn_v)
+
+        if is_same_sign:
+            status = "동일 (+)"
+        elif is_opp_sign:
+            status = "반전 (-)"
+        else:
+            status = "불일치"
+        sign_checks.append({"주성분": f"PC{i+1}", "부호 관계": status})
+
+    df_sign = pd.DataFrame(sign_checks)
+    print("\n3. 전체 주성분별 부호 비교 표")
+    print(df_sign.to_string(index=False))
+
+    # 5. 2D 산점도 그리기
+    plt.figure(figsize=(7, 5))
+    scatter = plt.scatter(Z_sklearn[:, 0], Z_sklearn[:, 1], c=y_raw, cmap='viridis', alpha=0.8, edgecolors='k', s=40)
+    plt.colorbar(scatter, label='Target / Quality')
+    plt.title('PCA 2D Projection (Wine Data)')
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
+    plt.grid(True, linestyle=':', alpha=0.6)
+    plt.tight_layout()
+    plt.savefig('pca_2d_scatter.png', dpi=150)
+    plt.close()
+
+    print("\n4. 시각화")
+    print("• 2D 산점도 저장 완료: pca_2d_scatter.png")
+    print(
+        "• 부호 반전 이유: 고유벡터 v와 -v는 동일한 축 방향을 정의하므로 "
+        "알고리즘 구현 방식(SVD/Eigen)에 따라 부호가 반전될 수 있습니다.\n"
+    )
+    
 if __name__ == "__main__":
     run_problem_2_1()
