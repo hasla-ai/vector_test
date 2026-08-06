@@ -91,6 +91,43 @@ def main():
         "두 행렬 A(m, n)와 B(k, l)의 행렬곱(A @ B)이 성립하려면 앞 행렬 A의 열 개수(n)와 뒤 행렬 B의 행 개수(k)가 반드시 일치해야 합니다."
     )
 
+    # -------------------------------------------------------------
+    # [문제 2-2] 전치로 shape 맞추고 전치 성질 검증하기
+    # -------------------------------------------------------------
+
+    # 가중치 행렬 W 생성 (5, 3)
+    W = np.random.randn(5, 3)
+
+    print("=== [1장-3강] 문제 2-2 출력 결과 ===")
+
+    # 1. 전치 전후 shape 확인
+    print(f"X 전치 전 shape : {X.shape}")
+    print(f"X 전치 후 (X.T) shape : {X.T.shape}\n")
+
+    # 2. (X @ W).T 와 W.T @ X.T 연산 및 일치 여부 확인
+    X_W_transposed = (X @ W).T
+    W_T_X_T = W.T @ X.T
+
+    print(f"(X @ W).T shape : {X_W_transposed.shape}")
+    print(f"W.T @ X.T shape  : {W_T_X_T.shape}")
+    print(
+        f"두 결과의 일치 여부 (np.allclose) : {np.allclose(X_W_transposed, W_T_X_T)}\n"
+    )
+
+    # 3. 순서를 유지한 경우 (X.T @ W.T) 계산 시도 및 예외 처리
+    print("=== 순서를 유지한 경우 (X.T @ W.T) 시도 ===")
+    try:
+        invalid_product = X.T @ W.T
+    except ValueError as e:
+        print(f"계산 가능 여부 : 불가능 (오류 발생)")
+        print(f"발생한 오류 메시지 : {e}\n")
+
+    # 4. 전치 성질 설명
+    print("=== 전치 성질 설명 ===")
+    print(
+        "행렬곱이 성립하려면 앞 행렬의 열과 뒤 행렬의 행 크기가 같아야 하므로, 각 행렬을 전치하면 차원의 축이 뒤바뀌어 연산 순서도 반대로 전환됩니다."
+    )
+
 
 if __name__ == "__main__":
     main()
