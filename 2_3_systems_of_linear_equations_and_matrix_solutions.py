@@ -1,131 +1,109 @@
 ﻿import numpy as np
 import pandas as pd
+from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import StandardScaler
 
-RANDOM_STATE = 42
-np.random.seed(RANDOM_STATE)
-
-# dataset_2_3 모듈의 describe_solution 활용 (Fallback 지원)
-try:
-    from dataset_2_3 import describe_solution
-except ImportError:
-
-    def describe_solution(A, b):
-        A = np.asarray(A, dtype=float)
-        b = np.asarray(b, dtype=float).reshape(-1)
-        rank_A = np.linalg.matrix_rank(A)
-        rank_Ab = np.linalg.matrix_rank(np.column_stack([A, b]))
-        n_vars = A.shape[1]
-        if rank_A < rank_Ab:
-            kind = "해 없음(불능)"
-        elif rank_A == n_vars:
-            kind = "유일해"
-        else:
-            kind = "무한해"
-        return {
-            "rank(A)": rank_A,
-            "rank([A|b])": rank_Ab,
-            "변수 수": n_vars,
-            "판정": kind,
-        }
+# dataset_2_3 모듈 사용
+from dataset_2_3 import X_df, describe_solution, y_raw
 
     
-    # 필수 1 : 배합 조건을 방정식으로 바꿔 한 번에 풀기
-    # -------------------------------------------------------------
-    # 문제 1-1 : 조건을 Ax = b로 정리하고 풀기
-    # -------------------------------------------------------------
+# 필수 1 : 배합 조건을 방정식으로 바꿔 한 번에 풀기
+# -------------------------------------------------------------
+# 문제 1-1 : 조건을 Ax = b로 정리하고 풀기
+# -------------------------------------------------------------
 
-    def run_problem_1_1():
-        print("=== [2장-3강] 문제 1-1 출력 결과 ===")
+def run_problem_1_1():
+    print("=== [2장-3강] 문제 1-1 출력 결과 ===")
 
-        # 1. 연립방정식을 계수 행렬 A와 상수항 벡터 b로 표현
-        #  2*x1 + 1*x2 = 8   (알코올 조건)
-        #  1*x1 + 3*x2 = 13  (산도 조건)
-        A = np.array([[2.0, 1.0], [1.0, 3.0]])
-        b = np.array([8.0, 13.0])
+    # 1. 연립방정식을 계수 행렬 A와 상수항 벡터 b로 표현
+    #  2*x1 + 1*x2 = 8   (알코올 조건)
+    #  1*x1 + 3*x2 = 13  (산도 조건)
+    A = np.array([[2.0, 1.0], [1.0, 3.0]])
+    b = np.array([8.0, 13.0])
 
-        print("--- [1] 계수 행렬 A와 상수항 벡터 b ---")
-        print(f"행렬 A:\n{A}")
-        print(f"행렬 A shape : {A.shape}")
-        print(f"벡터 b      : {b}")
-        print(f"벡터 b shape : {b.shape}\n")
+    print("--- [1] 계수 행렬 A와 상수항 벡터 b ---")
+    print(f"행렬 A:\n{A}")
+    print(f"행렬 A shape : {A.shape}")
+    print(f"벡터 b      : {b}")
+    print(f"벡터 b shape : {b.shape}\n")
 
-        # 2. np.linalg.solve(A, b)를 통한 해 구하기
-        x = np.linalg.solve(A, b)
-        x1, x2 = x[0], x[1]
+    # 2. np.linalg.solve(A, b)를 통한 해 구하기
+    x = np.linalg.solve(A, b)
+    x1, x2 = x[0], x[1]
 
-        print("--- [2] 연립방정식의 해 x ---")
-        print(f"해 벡터 x (x1, x2) : {x}")
-        print(f"원액 A 양 (x1)     : {x1:.2f} L")
-        print(f"원액 B 양 (x2)     : {x2:.2f} L\n")
+    print("--- [2] 연립방정식의 해 x ---")
+    print(f"해 벡터 x (x1, x2) : {x}")
+    print(f"원액 A 양 (x1)     : {x1:.2f} L")
+    print(f"원액 B 양 (x2)     : {x2:.2f} L\n")
 
-        # 3. A @ x 검산 및 일치 여부 확인
-        b_reconstructed = A @ x
-        is_equal = np.allclose(b_reconstructed, b)
+    # 3. A @ x 검산 및 일치 여부 확인
+    b_reconstructed = A @ x
+    is_equal = np.allclose(b_reconstructed, b)
 
-        print("--- [3] 검산 결과 (A @ x vs b) ---")
-        print(f"복원된 b (A @ x)   : {b_reconstructed}")
-        print(f"원래 벡터 b        : {b}")
-        print(f"일치 여부          : {is_equal}\n")
+    print("--- [3] 검산 결과 (A @ x vs b) ---")
+    print(f"복원된 b (A @ x)   : {b_reconstructed}")
+    print(f"원래 벡터 b        : {b}")
+    print(f"일치 여부          : {is_equal}\n")
 
-        # 4. 배합 결과 해석 문장
-        print("=== [4] 배합 결과 해석 ===")
-        interpretation = f"원액 A {x1:.1f}L, 원액 B {x2:.1f}L를 섞으면 목표 알코올 도수(8)와 산도(13)를 정확히 맞출 수 있습니다."
-        print(interpretation)
+    # 4. 배합 결과 해석 문장
+    print("=== [4] 배합 결과 해석 ===")
+    interpretation = f"원액 A {x1:.1f}L, 원액 B {x2:.1f}L를 섞으면 목표 알코올 도수(8)와 산도(13)를 정확히 맞출 수 있습니다."
+    print(interpretation)
 
-    # -------------------------------------------------------------
-    # 문제 1-2 : 조건을 Ax = b로 정리하고 풀기
-    # -------------------------------------------------------------
+# -------------------------------------------------------------
+# 문제 1-2 : 조건을 Ax = b로 정리하고 풀기
+# -------------------------------------------------------------
 
-    def run_problem_1_2():
-        print("=== [2장-3강] 문제 1-2 출력 결과 ===")
+def run_problem_1_2():
+    print("=== [2장-3강] 문제 1-2 출력 결과 ===")
 
-        # [문제 1-1]의 표준 행렬 A와 벡터 b
-        A = np.array([[2.0, 1.0], [1.0, 3.0]])
-        b = np.array([8.0, 13.0])
+    # [문제 1-1]의 표준 행렬 A와 벡터 b
+    A = np.array([[2.0, 1.0], [1.0, 3.0]])
+    b = np.array([8.0, 13.0])
 
-        # 1. 역행렬(inv) 방식과 solve 방식 비교
-        x_inv = np.linalg.inv(A) @ b
-        x_solve = np.linalg.solve(A, b)
-        diff_norm = np.linalg.norm(x_inv - x_solve)
+    # 1. 역행렬(inv) 방식과 solve 방식 비교
+    x_inv = np.linalg.inv(A) @ b
+    x_solve = np.linalg.solve(A, b)
+    diff_norm = np.linalg.norm(x_inv - x_solve)
 
-        print("--- [1] 표준 행렬 A에서 inv vs solve 비교 ---")
-        print(f"• np.linalg.inv(A) @ b 해 : {x_inv}")
-        print(f"• np.linalg.solve(A, b) 해  : {x_solve}")
-        print(f"• 두 해의 차이 (L2 Norm)    : {diff_norm:.6e}\n")
+    print("--- [1] 표준 행렬 A에서 inv vs solve 비교 ---")
+    print(f"• np.linalg.inv(A) @ b 해 : {x_inv}")
+    print(f"• np.linalg.solve(A, b) 해  : {x_solve}")
+    print(f"• 두 해의 차이 (L2 Norm)    : {diff_norm:.6e}\n")
 
-        # 2. 거의 선형종속에 가까운 병태 행렬(Ill-conditioned Matrix) A_ill 생성
-        A_ill = np.array([[2.0, 1.0], [2.000001, 1.0000004]])
-        b_ill = np.array([8.0, 8.000002])
+    # 2. 거의 선형종속에 가까운 병태 행렬(Ill-conditioned Matrix) A_ill 생성
+    A_ill = np.array([[2.0, 1.0], [2.000001, 1.0000004]])
+    b_ill = np.array([8.0, 8.000002])
 
-        cond_ill = np.linalg.cond(A_ill)
+    cond_ill = np.linalg.cond(A_ill)
 
-        # 3. A_ill에 대해 두 방식으로 해 구하기
-        x_inv_ill = np.linalg.inv(A_ill) @ b_ill
-        x_solve_ill = np.linalg.solve(A_ill, b_ill)
-        diff_norm_ill = np.linalg.norm(x_inv_ill - x_solve_ill)
+    # 3. A_ill에 대해 두 방식으로 해 구하기
+    x_inv_ill = np.linalg.inv(A_ill) @ b_ill
+    x_solve_ill = np.linalg.solve(A_ill, b_ill)
+    diff_norm_ill = np.linalg.norm(x_inv_ill - x_solve_ill)
 
-        print("--- [2] 병태 행렬 A_ill에서 조건수 및 두 방식 차이 ---")
-        print(f"• A_ill 조건수 (Condition Number) : {cond_ill:,.2f}")
-        print(f"• A_ill에서 inv 해                 : {x_inv_ill}")
-        print(f"• A_ill에서 solve 해               : {x_solve_ill}")
-        print(f"• A_ill에서 두 해의 차이 (L2 Norm)  : {diff_norm_ill:.6e}\n")
+    print("--- [2] 병태 행렬 A_ill에서 조건수 및 두 방식 차이 ---")
+    print(f"• A_ill 조건수 (Condition Number) : {cond_ill:,.2f}")
+    print(f"• A_ill에서 inv 해                 : {x_inv_ill}")
+    print(f"• A_ill에서 solve 해               : {x_solve_ill}")
+    print(f"• A_ill에서 두 해의 차이 (L2 Norm)  : {diff_norm_ill:.6e}\n")
 
-        # 4. b_ill의 둘째 원소를 0.0000001만 미세하게 변경(Perturbation)
-        b_ill_perturbed = np.array([8.0, 8.0000021])
-        x_solve_perturbed = np.linalg.solve(A_ill, b_ill_perturbed)
-        shift_norm = np.linalg.norm(x_solve_ill - x_solve_perturbed)
+    # 4. b_ill의 둘째 원소를 0.0000001만 미세하게 변경(Perturbation)
+    b_ill_perturbed = np.array([8.0, 8.0000021])
+    x_solve_perturbed = np.linalg.solve(A_ill, b_ill_perturbed)
+    shift_norm = np.linalg.norm(x_solve_ill - x_solve_perturbed)
 
-        print("--- [3] 미세한 입력을 변화(0.0000001)시켰을 때 해의 변동성 ---")
-        print(f"• 변경 전 solve 해 (b_ill)           : {x_solve_ill}")
-        print(f"• 미세 변경 후 solve 해 (b_perturbed) : {x_solve_perturbed}")
-        print(f"• 해의 위치 이동 거리 (L2 Norm)      : {shift_norm:.6f}\n")
+    print("--- [3] 미세한 입력을 변화(0.0000001)시켰을 때 해의 변동성 ---")
+    print(f"• 변경 전 solve 해 (b_ill)           : {x_solve_ill}")
+    print(f"• 미세 변경 후 solve 해 (b_perturbed) : {x_solve_perturbed}")
+    print(f"• 해의 위치 이동 거리 (L2 Norm)      : {shift_norm:.6f}\n")
 
-        # 5. 실무에서 solve 권장 이유 (한 문장)
-        print("=== [4] 실무에서 inv보다 solve를 권장하는 이유 ===")
-        print(
-            "역행렬을 직접 구하는 연산($O(n^3)$)은 메모리 소모가 크고 부동소수점 오차 누적에 매우 취약한 반면, "
-            "solve 함수는 LU 분해 기반의 고성능 수치 알고리즘을 사용하여 계산 효율성과 연산 안정성이 훨씬 뛰어나기 때문입니다."
-        )
+    # 5. 실무에서 solve 권장 이유 (한 문장)
+    print("=== [4] 실무에서 inv보다 solve를 권장하는 이유 ===")
+    print(
+        "역행렬을 직접 구하는 연산($O(n^3)$)은 메모리 소모가 크고 부동소수점 오차 누적에 매우 취약한 반면, "
+        "solve 함수는 LU 분해 기반의 고성능 수치 알고리즘을 사용하여 계산 효율성과 연산 안정성이 훨씬 뛰어나기 때문입니다."
+    )
 
     # -------------------------------------------------------------
     # 문제 2-1 : rank 비교로 해의 종류 판별하기
@@ -195,8 +173,70 @@ def run_problem_2_1():
     )
 
     # -------------------------------------------------------------
-    # 문제 3-1 : 
+    # 문제 3-1 : 최소제곱해와 정규방정식 비교하기
     # -------------------------------------------------------------
 
+def run_problem_3_1():
+    print("=== [2장-3강] 문제 3-1 출력 결과 ===")
+
+    # 1. Wine Quality 데이터 스케일링 및 절편(1) 컬럼 추가 -> 설계행렬 Xd 생성
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X_df)
+    Xd = np.hstack([np.ones((X_scaled.shape[0], 1)), X_scaled])
+    y = np.asarray(y_raw, dtype=float)
+
+    # 2. Xd shape 확인 및 해의 종류 판정
+    n_samples, n_features = Xd.shape
+    sol_desc = describe_solution(Xd, y)
+
+    print("--- [1] 설계행렬 Xd 구조 및 해의 종류 판정 ---")
+    print(
+        f"• 설계행렬 Xd shape : {Xd.shape} (방정식 수: {n_samples}, 미지수 수: {n_features})"
+    )
+    print(f"• rank(Xd)          : {sol_desc['rank(A)']}")
+    print(f"• rank([Xd|y])      : {sol_desc['rank([A|b])']}")
+    print(f"• 이론적 판정       : {sol_desc['판정']} (Overdetermined System)\n")
+
+    # 3. np.linalg.lstsq를 통한 최소제곱해 계산
+    coef_lstsq, _, _, _ = np.linalg.lstsq(Xd, y, rcond=None)
+    pred_lstsq = Xd @ coef_lstsq
+    rmse_lstsq = np.sqrt(mean_squared_error(y, pred_lstsq))
+
+    print("--- [2] np.linalg.lstsq 최소제곱해 결과 ---")
+    print(f"• lstsq 절편 (Intercept) : {coef_lstsq[0]:.6f}")
+    print(f"• lstsq 계수 (Top 3)     : {np.round(coef_lstsq[1:4], 6)}")
+    print(f"• lstsq 예측 RMSE        : {rmse_lstsq:.6f}\n")
+
+    # 4. 정규방정식 (XᵀX β = Xᵀy)을 np.linalg.solve로 계산
+    A_normal = Xd.T @ Xd
+    b_normal = Xd.T @ y
+    coef_normal = np.linalg.solve(A_normal, b_normal)
+    pred_normal = Xd @ coef_normal
+    rmse_normal = np.sqrt(mean_squared_error(y, pred_normal))
+
+    print("--- [3] 정규방정식 np.linalg.solve 해 결과 ---")
+    print(f"• 정규방정식 절편        : {coef_normal[0]:.6f}")
+    print(f"• 정규방정식 계수 (Top 3): {np.round(coef_normal[1:4], 6)}")
+    print(f"• 정규방정식 예측 RMSE   : {rmse_normal:.6f}\n")
+
+    # 5. 두 방식의 계수 차이 및 조건수 확인
+    diff_coef_norm = np.linalg.norm(coef_lstsq - coef_normal)
+    cond_Xd = np.linalg.cond(Xd)
+    cond_A_normal = np.linalg.cond(A_normal)
+
+    print("--- [4] 두 해의 차이 및 조건수(Condition Number) 비교 ---")
+    print(f"• 두 계수 벡터의 차이 (L2 Norm) : {diff_coef_norm:.6e}")
+    print(f"• 원래 행렬 Xd의 조건수         : {cond_Xd:,.2f}")
+    print(f"• 정규방정식 행렬 (XᵀX)의 조건수  : {cond_A_normal:,.2f}\n")
+
+    # 6. 실무 권장 이유 설명
+    print("=== [5] 최소제곱해 존재 원리 및 lstsq 권장 이유 ===")
+    print(
+        "1. 정확한 해가 존재하지 않는 Overdetermined 조건(방정식 수 > 미지수 수)에서도, "
+        "타겟 벡터 y를 설계행렬 Xd의 열공간(Column Space)으로 직교사영(Orthogonal Projection)하여 잔차 제곱합 $\|X_d \\beta - y\|^2$을 최소화하는 해는 항상 존재합니다.\n"
+        "2. 정규방정식 $X_d^T X_d$를 직접 계산하면 조건수가 제곱($\\kappa(X_d^T X_d) = \\kappa(X_d)^2$)되어 수치적 불확실성과 반올림 오차가 급격히 増大합니다. "
+        "반면 `np.linalg.lstsq`는 SVD(단이값 분해) 기반의 연산을 사용하여 $X_d^T X_d$ 계산 없이 오차 증폭 위험을 차단하고 안정적으로 정밀한 해를 제공합니다."
+    )
+
 if __name__ == "__main__":
-    run_problem_2_1()
+    run_problem_3_1()

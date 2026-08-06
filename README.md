@@ -166,6 +166,16 @@ uv run *(해당문제).py
 
 - 품질 분석팀은 이화학 측정값으로 와인 품질 점수를 예측하는 회귀식을 만들려 합니다. 이때 방정식(샘플)이 수천 개, 미지수(회귀계수)는 10여 개라 모든 샘플을 정확히 만족하는 해는 존재하지 않습니다. 이런 과잉결정 상황에서 오차 제곱합을 최소화하는 해를 구하는 방법을 확인합니다.
 
+## ** [3장 1강] - 실습: 고유값과 고유벡터 ** ##
+
+- 분야: 헬스케어
+- 데이터셋(`dataset_3_1.py`): UCI Breast Cancer Wisconsin (Diagnostic)
+- 사용 방식: `ucimlrepo.fetch_ucirepo(id=17)`
+- 출처: https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic
+- 사용 목적: 진단 특성들의 공분산행렬(대칭행렬)을 고유분해해 데이터가 퍼져 있는 방향과 그 크기를 확인합니다.
+
+
+
 
 -------------
 
