@@ -4,7 +4,6 @@ import pandas as pd
 # 공통 난수 시드 설정
 RANDOM_STATE = 42
 
-
 def _dummy_retail():
     """UCI를 쓸 수 없을 때 사용하는 동일한 컬럼 구조의 대체 거래 데이터입니다."""
     rng = np.random.default_rng(RANDOM_STATE)

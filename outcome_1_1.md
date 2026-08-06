@@ -1,6 +1,6 @@
 ##**1장 1강: 벡터·노름·정규화 (1)**##
 
-- 데이터셋(`dataset.py`): UCI Wine Quality
+- 데이터셋(`dataset_1-1.py`): UCI Wine Quality
 - 사용 방식: `ucimlrepo.fetch_ucirepo(id=186)`
 - 출처: https://archive.ics.uci.edu/dataset/186/wine+quality
 

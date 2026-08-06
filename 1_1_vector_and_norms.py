@@ -5,7 +5,7 @@
 
 import numpy as np
 import pandas as pd
-from dataset import get_wine_data
+from dataset_1_1 import get_wine_data
 
 # 공통 난수 시드 설정
 RANDOM_STATE = 42

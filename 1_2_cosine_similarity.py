@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity  # sklearn의 cosin_similarity 함수
-from dataset2 import get_retail_data
+from dataset_1_2 import get_retail_data
 
 
 # 공통 난수 시드 설정
