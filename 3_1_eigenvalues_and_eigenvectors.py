@@ -131,6 +131,71 @@ def run_problem_2_1():
         "준양정치(Positive Semi-definite) 행렬이므로 고유값이 각 축의 분산을 의미하여 항상 0 이상입니다.\n"
     )
 
+# =========================================================
+# [문제 3-1] 투영값의 분산과 고유값 비교하기
+# =========================================================
+def run_problem_3_1():
+    print("=== [문제 3-1] 투영값의 분산과 고유값 비교하기 ===")
+
+    evals, evecs = np.linalg.eigh(cov)
+    sort_idx = np.argsort(evals)[::-1]
+    evals_sorted = evals[sort_idx]
+    evecs_sorted = evecs[:, sort_idx]
+
+    # 1 & 2 & 3. PC1, PC2 투영 및 분산 계산
+    pc1 = evecs_sorted[:, 0]
+    pc2 = evecs_sorted[:, 1]
+
+    z1 = Xs @ pc1
+    z2 = Xs @ pc2
+
+    var_z1 = np.var(z1, ddof=1)
+    var_z2 = np.var(z2, ddof=1)
+
+    # 4. 임의의 단위벡터 방향 투영 분산
+    np.random.seed(RANDOM_STATE)
+    r_vec = np.random.randn(Xs.shape[1])
+    r_unit = r_vec / np.linalg.norm(r_vec)
+    z_rand = Xs @ r_unit
+    var_rand = np.var(z_rand, ddof=1)
+
+    # 출력 표
+    df_res = pd.DataFrame(
+        {
+            "방향": ["PC1 (고유벡터1)", "PC2 (고유벡터2)", "임의 단위벡터"],
+            "투영 분산(ddof=1)": [var_z1, var_z2, var_rand],
+            "대응 고유값(λ)": [evals_sorted[0], evals_sorted[1], "-"],
+            "일치 여부": [
+                np.isclose(var_z1, evals_sorted[0]),
+                np.isclose(var_z2, evals_sorted[1]),
+                "N/A",
+            ],
+        }
+    )
+
+    print("1. 방향별 투영값 분산과 대응 고유값 비교 표")
+    print(df_res.to_string(index=False))
+    print()
+
+    # 5. PC1 투영값 히스토그램 시각화 및 저장
+    plt.figure(figsize=(7, 4))
+    plt.hist(z1, bins=30, color="steelblue", edgecolor="black", alpha=0.7)
+    plt.title(f"PC1 Projection Histogram (Var = {var_z1:.2f} ≈ λ1 = {evals_sorted[0]:.2f})")
+    plt.xlabel("z1 (Xs @ pc1)")
+    plt.ylabel("Frequency")
+    plt.grid(True, linestyle=":", alpha=0.6)
+    plt.tight_layout()
+    plt.savefig("pc1_histogram.png", dpi=150)
+    plt.close()
+    print("2. PC1 투영값 히스토그램 생성 완료: pc1_histogram.png\n")
+
+    # 6. 차원 축소 관점 해석
+    print("3. 차원 축소 관점의 해석")
+    print(
+        "각 고유값은 해당 고유벡터 방향으로 데이터를 투영했을 때의 분산 크기와 정확히 일치합니다. "
+        "따라서 차원을 축소할 때 고유값이 큰 방향을 선택하면 데이터가 가진 전체 정보량(분산)을 가장 많이 보존할 수 있습니다."
+    )
+
+
 if __name__ == "__main__":
-    run_problem_2_1()
-    
+    run_problem_3_1()
