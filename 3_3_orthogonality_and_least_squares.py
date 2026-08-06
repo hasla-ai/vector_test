@@ -173,6 +173,51 @@ def run_problem_2_2():
     )
     print(f"\n4. 투영 관점의 해석:\n{meaning}\n")
 
+# =========================================================
+# [문제 3-1] Gram-Schmidt로 정규직교기저 만들기
+# =========================================================
+def run_problem_3_1():
+    print("=" * 60)
+    print("[심화 1] 문제 3-1 Gram-Schmidt로 정규직교기저 만들기")
+    print("=" * 60)
+
+    A = Xd[:, 1:4]  # 특성 1~3번 컬럼 (절편 컬럼 제외)
+    n, k = A.shape
+    U = np.zeros((n, k))
+
+    # Gram-Schmidt 과정 구현
+    for j in range(k):
+        v = A[:, j].copy()
+        for i in range(j):
+            proj = np.dot(U[:, i], A[:, j]) * U[:, i]
+            v -= proj
+        U[:, j] = v / np.linalg.norm(v)
+
+    # 1. UᵀU = I 확인
+    UtU = U.T @ U
+    print("1. UᵀU 검증 결과 (단위행렬):")
+    print(np.round(UtU, 5))
+
+    # 2. QR 분해 Q와 절댓값 비교
+    Q, _ = np.linalg.qr(A)
+    max_diff = np.max(np.abs(np.abs(U) - np.abs(Q[:, :k])))
+    print(f"\n2. Gram-Schmidt U와 QR의 Q 간 절댓값 최대 차이: {max_diff:.2e}")
+
+    # 3. 직교화 전후 내적 비교
+    orig_dot = A.T @ A
+    ortho_dot = U.T @ U
+
+    print("\n3. 직교화 전 컬럼 간 내적 (비대각 성분이 0이 아님):")
+    print(np.round(orig_dot, 2))
+    print("\n   직교화 후 컬럼 간 내적 (대각 성분만 1, 비대각은 0):")
+    print(np.round(ortho_dot, 2))
+
+    meaning = (
+        "정규직교기저를 사용하면 데이터 축 간의 방향 겹침(상관성)이 완전 제거되어 역행렬 연산 없이 전치만으로 좌표를 구할 수 있습니다.\n"
+        "또한 회귀 분석 시 멀티콜리니어리티(다공선성) 문제를 예방하고 계산의 수치적 안정성을 대폭 향상시켜 줍니다."
+    )
+    print(f"\n4. 정규직교기저의 장점:\n{meaning}\n")
+
 if __name__ == "__main__":
-    run_problem_2_2()
+    run_problem_3_1()
 
