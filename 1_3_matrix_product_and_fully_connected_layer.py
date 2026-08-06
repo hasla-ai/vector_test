@@ -61,6 +61,35 @@ def main():
         "반복문(for) 대신 전체 데이터를 행렬(Batch) 단위로 묶어 연산하면, C 언어 수준의 벡터화(Vectorization) 및 병렬 처리가 가능해져 메모리 접근 효율과 계산 속도가 획기적으로 향상됩니다."
     )
 
+    # -------------------------------------------------------------
+    # [문제 2-1] Shape 오류 재현 및 수정
+    # -------------------------------------------------------------
+    print("=== [1장-3강] 문제 2-1 출력 결과 ===")
+
+    # 1. 입력 차원과 맞지 않는 잘못된 가중치 W_wrong (4, 3) 생성
+    W_wrong = np.random.randn(4, 3)
+
+    # 2. X와 W_wrong의 Shape 나란히 출력
+    print(f"X.shape: {X.shape}, W_wrong.shape: {W_wrong.shape}")
+
+    # 3. try/except로 행렬곱 예외 처리 및 오류 메시지 출력
+    try:
+        Y_wrong = X @ W_wrong
+    except ValueError as e:
+        print(f"발생한 오류 메시지 : {e}\n")
+
+    # 4. 올바른 Shape인 W_fixed (5, 3)로 수정하여 계산
+    b = np.random.randn(3)
+    W_fixed = np.random.randn(5, 3)
+    Y_fixed = X @ W_fixed + b
+
+    print(f"수정 후 계산 결과 Y_fixed shape : {Y_fixed.shape}\n")
+
+    # 5. 행렬곱 가능 조건 정리
+    print("=== 행렬곱 가능 조건 정리 ===")
+    print(
+        "두 행렬 A(m, n)와 B(k, l)의 행렬곱(A @ B)이 성립하려면 앞 행렬 A의 열 개수(n)와 뒤 행렬 B의 행 개수(k)가 반드시 일치해야 합니다."
+    )
 
 
 if __name__ == "__main__":
