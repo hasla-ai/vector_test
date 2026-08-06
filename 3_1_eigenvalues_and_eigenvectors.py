@@ -1,4 +1,5 @@
-﻿import matplotlib.pyplot as plt
+﻿import os
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dataset_3_1 import Xs, cov
@@ -178,6 +179,7 @@ def run_problem_3_1():
     print()
 
     # 5. PC1 투영값 히스토그램 시각화 및 저장
+    save_path = os.path.join('./images', 'chapter_3_1_problem_3_1_pc1_projection_histogram.png')
     plt.figure(figsize=(7, 4))
     plt.hist(z1, bins=30, color="steelblue", edgecolor="black", alpha=0.7)
     plt.title(f"PC1 Projection Histogram (Var = {var_z1:.2f} ≈ λ1 = {evals_sorted[0]:.2f})")
@@ -185,9 +187,9 @@ def run_problem_3_1():
     plt.ylabel("Frequency")
     plt.grid(True, linestyle=":", alpha=0.6)
     plt.tight_layout()
-    plt.savefig("pc1_histogram.png", dpi=150)
+    plt.savefig(save_path, dpi=150)
     plt.close()
-    print("2. PC1 투영값 히스토그램 생성 완료: pc1_histogram.png\n")
+    print("2. PC1 투영값 히스토그램 생성 완료:chapter_3_1_problem_3_1_pc1_projection_histogram.png\n")
 
     # 6. 차원 축소 관점 해석
     print("3. 차원 축소 관점의 해석")
