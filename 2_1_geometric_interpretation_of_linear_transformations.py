@@ -229,6 +229,75 @@ def main():
         title="Composite Transformation Order: M1 (R@S) vs M2 (S@R)",
     )
 
+    # 심화 1: 이 변환은 정말 선형 변환일까?
+    # -------------------------------------------------------------
+    # [문제 3-1] 가산성·동차성으로 선형 변환 판별하기
+    # -------------------------------------------------------------
+
+    print("=== [2장-1강] 문제 3-1 출력 결과 ===")
+
+    # 1. 합성 변환 행렬 M1 (R @ S) 및 bias 정의
+    S = np.array([[2.0, 0.0], [0.0, 0.8]])
+    theta = np.deg2rad(45)
+    R = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+    M1 = R @ S
+    bias = np.array([3.0, -2.0])
+
+    # 2. 두 변환 함수 정의
+    def T_linear(v):
+        return apply_T(M1, v)
+
+    def T_affine(v):
+        return apply_T(M1, v) + bias
+
+    # 3. 검증용 무작위 벡터 u, v 및 스칼라 c, 원점 0 설정
+    u = np.array([1.5, -0.5])
+    v = np.array([-2.0, 3.0])
+    c = 2.5
+    zero_vec = np.array([0.0, 0.0])
+
+    # 4. T_linear 검증
+    lin_add = np.allclose(T_linear(u + v), T_linear(u) + T_linear(v))
+    lin_hom = np.allclose(T_linear(c * u), c * T_linear(u))
+    lin_zero = np.allclose(T_linear(zero_vec), zero_vec)
+
+    # 5. T_affine 검증
+    aff_add = np.allclose(T_affine(u + v), T_affine(u) + T_affine(v))
+    aff_hom = np.allclose(T_affine(c * u), c * T_affine(u))
+    aff_zero = np.allclose(T_affine(zero_vec), zero_vec)
+
+    # 6. 검증 결과 출력 표 정리
+    print("--- [1] 가산성 / 동차성 / 원점 보존 검증 표 ---")
+    print(
+        f"{'검증 항목':<18} | {'T_linear (선형 변환)':<20} | {'T_affine (아핀 변환)':<20}"
+    )
+    print("-" * 65)
+    print(f"{'1. 가산성 T(u+v)=T(u)+T(v)':<18} | {str(lin_add):<20} | {str(aff_add):<20}")
+    print(f"{'2. 동차성 T(c·u)=c·T(u)':<18} | {str(lin_hom):<20} | {str(aff_hom):<20}")
+    print(f"{'3. 원점 보존 T(0)=0':<18} | {str(lin_zero):<20} | {str(aff_zero):<20}")
+    print("-" * 65 + "\n")
+
+    # 7. 실제 데이터 X2에 두 변환 적용
+    X2_linear = T_linear(X2)
+    X2_affine = T_affine(X2)
+
+    # 8. 선형 변환 미성립 이유 및 딥러닝에서 XW + b를 쓰는 이유 정리
+    print("=== 선형 변환 미성립 이유 및 딥러닝에서의 필요성 ===")
+    print(
+        "1) 선형 변환 미성립 이유: 평행이동(bias)이 포함되면 원점이 다른 위치로 이동하므로 T(0) ≠ 0이 되어 가산성과 동차성을 모두 위배하며, 엄밀하게는 '선형 변환'이 아닌 '아핀 변환(Affine Transformation)'이 됩니다."
+    )
+    print(
+        "2) 딥러닝에서 XW + b를 사용하는 이유: 순수 선형 변환만 사용하면 모든 결정 경계가 원점을 지나야 하는 치명적 제약이 생깁니다. 편향(bias) $b$를 더해 결정 경계를 원하는 위치로 평행이동시킴으로써 모델의 표현력(Capacity)을 극대화할 수 있습니다."
+    )
+
+    # 9. 시각화 출력 (T_linear vs T_affine 비교)
+    print("\n[안내] 선형 변환(T_linear)과 아핀 변환(T_affine) 산점도 창을 띄웁니다.")
+    plot_pair(
+        X2_linear,
+        X2_affine,
+        label_after="T_affine (T_linear + bias)",
+        title="Linear vs Affine Transformation (Shifted by bias=[3, -2])",
+    )
 
 if __name__ == "__main__":
     main()
