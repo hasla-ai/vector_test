@@ -99,6 +99,51 @@ def main():
         "변수 i와 변수 j 사이의 공분산 Cov(X_i, X_j)는 변수 j와 변수 i 사이의 공분산 Cov(X_j, X_i)와 수학적으로 완벽히 동일하므로, (i, j) 위치와 (j, i) 위치의 원소가 항상 같은 대칭행렬이 됩니다."
     )
 
+    # -------------------------------------------------------------
+    # [문제 2-1] AB ≠ BA 확인하기
+    # -------------------------------------------------------------
+    print("=== [1장-4강] 문제 2-1 출력 결과 ===")
+
+    # 1. 2x2 행렬 P, Q 정의
+    P = np.array([[1, 2], [0, 1]])
+    Q = np.array([[1, 0], [3, 1]])
+
+    # 2. P @ Q 및 Q @ P 계산
+    PQ = P @ Q
+    QP = Q @ P
+
+    print("--- [1] 일반 행렬 P, Q 곱 연산 ---")
+    print(f"P @ Q :\n{PQ}")
+    print(f"Q @ P :\n{QP}")
+    print(
+        f"P @ Q == Q @ P 동일 여부 (np.array_equal) : {np.array_equal(PQ, QP)}\n"
+    )
+
+    # 3. 특수 대각행렬과의 교환 가능 여부 테스트
+    # (1) 2 * 단위행렬
+    I_scalar = 2 * np.eye(2)
+    commute_I_scalar = np.array_equal(I_scalar @ Q, Q @ I_scalar)
+
+    # (2) 서로 다른 대각 원소를 가진 대각행렬 np.diag([2, 5])
+    D = np.diag([2, 5])
+    commute_D_Q = np.array_equal(D @ Q, Q @ D)
+
+    # (3) 대각행렬끼리의 곱
+    D2 = np.diag([3, 4])
+    commute_D1_D2 = np.array_equal(D @ D2, D2 @ D1 if "D1" in locals() else D2 @ D)
+
+    print("--- [2] 대각행렬 및 단위행렬 교환법칙 비교 ---")
+    print(f"1) (2 * 단위행렬) @ Q == Q @ (2 * 단위행렬) : {commute_I_scalar}")
+    print(f"2) diag([2, 5]) @ Q == Q @ diag([2, 5])       : {commute_D_Q}")
+    print(f"3) 대각행렬끼리의 곱 (D1 @ D2 == D2 @ D1)      : {commute_D1_D2}\n")
+
+    # 4. 비교환성 이유 설명
+    print("=== 행렬 곱이 교환법칙을 만족하지 않는 이유 ===")
+    print(
+        "행렬곱 AB의 (i, j) 원소는 A의 i번째 '행'과 B의 j번째 '열'의 내적이지만, "
+        "BA의 (i, j) 원소는 B의 i번째 '행'과 A의 j번째 '열'의 내적이므로 "
+        "서로 전혀 다른 벡터 간의 곱셈이 수행되어 결과가 달라집니다."
+    )
 
 if __name__ == "__main__":
     main()
