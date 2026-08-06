@@ -245,10 +245,10 @@ def main():
 
     # 2. 두 변환 함수 정의
     def T_linear(v):
-        return apply_T(M1, v)
+        return apply_T(M1, v) #행렬곱만 하는 변환
 
     def T_affine(v):
-        return apply_T(M1, v) + bias
+        return apply_T(M1, v) + bias #평행이동을 더한 변환
 
     # 3. 검증용 무작위 벡터 u, v 및 스칼라 c, 원점 0 설정
     u = np.array([1.5, -0.5])
