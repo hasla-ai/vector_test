@@ -128,6 +128,59 @@ def main():
         "행렬곱이 성립하려면 앞 행렬의 열과 뒤 행렬의 행 크기가 같아야 하므로, 각 행렬을 전치하면 차원의 축이 뒤바뀌어 연산 순서도 반대로 전환됩니다."
     )
 
+    # -------------------------------------------------------------
+    # [문제 3-1] 2층 구조의 shape 흐름과 파라미터 수 계산하기
+    # -------------------------------------------------------------
+
+    print("=== [1장-3강] 심화 문제 3-1 출력 결과 ===")
+
+    # 1. 은닉 차원 4 설정 시 가중치 및 편향 생성
+    # 입력(5) -> 은닉(4) -> 출력(2)
+    W1 = np.random.randn(5, 4)
+    b1 = np.random.randn(4)
+    W2 = np.random.randn(4, 2)
+    b2 = np.random.randn(2)
+
+    # 2. 2층 연산 수행
+    H = X @ W1 + b1  # 은닉층 출력
+    O = H @ W2 + b2  # 최종 출력층
+
+    # 3. Shape 흐름 출력
+    print("1. Shape 흐름 (은닉 차원 = 4)")
+    print(f"   X shape : {X.shape}")
+    print(f"   H shape : {H.shape}")
+    print(f"   O shape : {O.shape}\n")
+
+    # 4. 파라미터 수 계산
+    params_l1 = W1.size + b1.size  # 5*4 + 4 = 24
+    params_l2 = W2.size + b2.size  # 4*2 + 2 = 10
+    total_params = params_l1 + params_l2
+
+    print("2. 파라미터 수 계산 (은닉 차원 = 4)")
+    print(f"   1층 파라미터 수 (W1 + b1) : {W1.size} + {b1.size} = {params_l1}")
+    print(f"   2층 파라미터 수 (W2 + b2) : {W2.size} + {b2.size} = {params_l2}")
+    print(f"   전체 파라미터 수          : {total_params}개\n")
+
+    # 5. 은닉 차원을 16으로 변경 시
+    W1_new = np.random.randn(5, 16)
+    b1_new = np.random.randn(16)
+    W2_new = np.random.randn(16, 2)
+    b2_new = np.random.randn(2)
+
+    H_new = X @ W1_new + b1_new
+    O_new = H_new @ W2_new + b2_new
+
+    params_l1_new = W1_new.size + b1_new.size  # 5*16 + 16 = 96
+    params_l2_new = W2_new.size + b2_new.size  # 16*2 + 2 = 34
+    total_params_new = params_l1_new + params_l2_new
+
+    print("3. 은닉 차원 변경 시 (4 -> 16)")
+    print(f"   변화된 H_new shape : {H_new.shape}")
+    print(f"   최종 O_new shape   : {O_new.shape} (최종 출력 Shape은 동일)")
+    print(f"   1층 파라미터 수    : {W1_new.size} + {b1_new.size} = {params_l1_new}")
+    print(f"   2층 파라미터 수    : {W2_new.size} + {b2_new.size} = {params_l2_new}")
+    print(f"   새 전체 파라미터 수: {total_params_new}개")
+
 
 if __name__ == "__main__":
     main()
