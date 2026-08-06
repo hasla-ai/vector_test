@@ -165,3 +165,59 @@ print("\n[선택 기준] 입력 행렬이 직사각행렬이거나, 행렬의 �
 # 문제 3-1 : 저랭크 근사의 오차와 정보 보존량 계산하기
 # ==========================================
 
+# ==========================================
+# 심화 1 : 저랭크 근사
+# ==========================================
+print("\n" + "="*50)
+print("[심화 1] 문제 3-1: 저랭크 근사 오차 및 정보 보존량")
+print("="*50)
+
+k_list = [1, 2, 5, 10, 20]
+total_energy = np.sum(S**2)
+orig_elements = m_rows * n_cols
+
+res = []
+for k in k_list:
+    M_k = U[:, :k] @ np.diag(S[:k]) @ Vt[:k, :]
+    err = np.linalg.norm(M - M_k, 'fro')
+    rel_err = err / orig_norm
+    energy = np.sum(S[:k]**2) / total_energy
+    storage_elements = k * (m_rows + n_cols + 1)
+    storage_ratio = storage_elements / orig_elements
+    
+    res.append({
+        'k': k,
+        '복원 오차': err,
+        '상대 오차': rel_err,
+        '보존 에너지': energy,
+        '저장 원소 수': storage_elements,
+        '압축 비율': f"{storage_ratio:.1%}"
+    })
+
+df_res = pd.DataFrame(res)
+print(df_res.to_string(index=False))
+
+# 보존 에너지 90% 이상인 최소 k 찾기
+k_90 = next(k for k in range(1, len(S) + 1) if np.sum(S[:k]**2) / total_energy >= 0.90)
+M_k90 = U[:, :k_90] @ np.diag(S[:k_90]) @ Vt[:k_90, :]
+rank_k90 = np.linalg.matrix_rank(M_k90)
+
+print(f"\n보존 에너지 90% 이상을 달성하는 최소 k: {k_90}")
+print(f"M_{k_90} 행렬의 actual rank: {rank_k90}")
+
+# 정보 손실 고려사항
+print("\n[정보 손실 허용 기준] 데이터의 목적이 시각화나 패턴 탐색인 경우 80~90% 수준의 에너지 보존으로도 충분하지만, 추천 및 복원 시스템에서는 k 변화에 따른 실제 다운스트림 예측 성능(RMSE, Accuracy 등)과 저장/계산 비용 간의 트레이드오프를 측정하여 정해야 합니다.")
+
+# 보존 에너지 곡선 시각화
+energies = np.cumsum(S**2) / total_energy
+plt.figure(figsize=(8, 4))
+plt.plot(range(1, len(S) + 1), energies, marker='o', color='b', label='Cumulative Energy')
+plt.axhline(0.90, color='r', linestyle='--', label='90% Threshold')
+plt.axvline(k_90, color='g', linestyle=':', label=f'k={k_90}')
+plt.title('Energy Preservation by Rank k')
+plt.xlabel('k (Number of Singular Values)')
+plt.ylabel('Preserved Energy Ratio')
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
