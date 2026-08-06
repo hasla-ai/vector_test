@@ -145,5 +145,46 @@ def main():
         "서로 전혀 다른 벡터 간의 곱셈이 수행되어 결과가 달라집니다."
     )
 
+    # -------------------------------------------------------------
+    # [문제 2-2] 전치 성질로 XᵀX가 대칭인 이유 설명하기
+    # -------------------------------------------------------------
+    print("=== [1장-4강] 문제 2-2 출력 결과 ===")
+
+    # 1. 2x2 행렬 P, Q 정의
+    P = np.array([[1, 2], [0, 1]])
+    Q = np.array([[1, 0], [3, 1]])
+
+    # 2. (P @ Q).T 와 Q.T @ P.T 비교
+    PQ_transposed = (P @ Q).T
+    QT_PT = Q.T @ P.T
+    is_reverse_equal = np.array_equal(PQ_transposed, QT_PT)
+
+    # 3. 순서를 유지한 P.T @ Q.T 비교
+    PT_QT = P.T @ Q.T
+    is_same_order_equal = np.array_equal(PQ_transposed, PT_QT)
+
+    print("--- [1] 전치와 연산 순서 검증 ---")
+    print(f"(P @ Q).T == Q.T @ P.T (순서 역전) 일치 여부 : {is_reverse_equal}")
+    print(
+        f"(P @ Q).T == P.T @ Q.T (순서 유지) 일치 여부 : {is_same_order_equal}\n"
+    )
+
+    # 4. (XᵀX)ᵀ 대칭성 검증 (수학적 전개 및 코드 확인)
+    # 수식: (XᵀX)ᵀ = Xᵀ (Xᵀ)ᵀ = XᵀX
+    G = X.T @ X
+    G_transposed = G.T
+    is_G_symmetric = np.allclose(G, G_transposed)
+
+    print("--- [2] XᵀX의 대칭성 검증 ---")
+    print(f"XᵀX shape        : {G.shape}")
+    print(f"(XᵀX)ᵀ shape     : {G_transposed.shape}")
+    print(f"XᵀX == (XᵀX)ᵀ 여부: {is_G_symmetric}\n")
+
+    # 5. 공분산 행렬 대칭성 결론 설명
+    print("=== 공분산 행렬이 항상 대칭인 이유 ===")
+    print(
+        "공분산 행렬은 중심화된 데이터 행렬 X_c에 대해 (1/n) * X_cᵀ X_c 형태를 띠는데, 전치 규칙에 의해 ((X_c)ᵀ X_c)ᵀ = (X_c)ᵀ X_c 가 되어 항상 대칭입니다."
+    )    
+
 if __name__ == "__main__":
     main()
