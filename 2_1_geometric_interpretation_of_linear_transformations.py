@@ -183,6 +183,51 @@ def main():
         label_after="rotated (45 deg)",
         title="Rotation Transformation (R_45)",
     )
+    # -------------------------------------------------------------
+    # [문제 2-2] 합성 변환의 순서 비교하기
+    # -------------------------------------------------------------
+
+    print("=== [2장-1강] 문제 2-2 출력 결과 ===")
+
+    # 1. 변환 행렬 S (스케일링) 및 R (45도 회전) 정의
+    S = np.array([[2.0, 0.0], [0.0, 0.8]])
+    theta = np.deg2rad(45)
+    R = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+
+    # 2. 합성 행렬 M1(스케일링 후 회전) 및 M2(회전 후 스케일링) 생성
+    # 벡터 v에 S 적용 후 R 적용: R @ (S @ v) = (R @ S) @ v
+    M1 = R @ S  # 스케일링 후 회전
+    M2 = S @ R  # 회전 후 스케일링
+
+    print("--- [1] 합성 행렬 비교 ---")
+    print(f"M1 (스케일링 후 회전, R @ S) :\n{np.round(M1, 4)}")
+    print(f"M2 (회전 후 스케일링, S @ R) :\n{np.round(M2, 4)}")
+
+    is_matrices_equal = np.allclose(M1, M2)
+    print(f"M1 == M2 행렬 동일 여부 : {is_matrices_equal}\n")
+
+    # 3. 데이터 X2에 두 합성 변환 각각 적용
+    X2_M1 = apply_T(M1, X2)
+    X2_M2 = apply_T(M2, X2)
+
+    is_transformed_equal = np.allclose(X2_M1, X2_M2)
+    print("--- [2] 변환 결과 비교 ---")
+    print(f"X2_M1 == X2_M2 변환 결과 동일 여부 : {is_transformed_equal}\n")
+
+    # 4. 합성 순서가 BA가 되는 이유 설명
+    print("=== 합성 순서가 BA가 되는 이유 ===")
+    print(
+        "벡터 v에 변환 A를 먼저 적용한 결과 (Av)에 변환 B를 적용하면 B(Av) = (BA)v가 되므로, 입력 벡터에 가까운 오른쪽 연산자부터 순차적으로 작용하여 전체 합성 행렬은 BA가 됩니다."
+    )
+
+    # 5. 시각화 출력 (두 합성 결과를 한 화면에서 비교)
+    print("\n[안내] 두 합성 변환(M1 vs M2) 결과 비교 산점도 창을 띄웁니다.")
+    plot_pair(
+        X2_M1,
+        X2_M2,
+        label_after="M2: Rotate -> Scale (S @ R)",
+        title="Composite Transformation Order: M1 (R@S) vs M2 (S@R)",
+    )
 
 
 if __name__ == "__main__":
