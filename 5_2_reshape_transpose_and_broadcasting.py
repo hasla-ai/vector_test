@@ -76,3 +76,36 @@ except ValueError as e:
 # 6. 설명
 print("6. 이유: 축 개수(ndim)가 다르면 프레임워크에서 다른 구조의 텐서로 인식하여 차원 불일치 에러를 발생시킵니다.")
 
+print("\n" + "=" * 60)
+print("[문제 2-2 : broadcasting으로 센서별 표준화 직접 구현하기]")
+print("=" * 60)
+
+# 1. mean, std (ddof=0)
+mean = A_small.mean(axis=0)
+std = A_small.std(axis=0) + 1e-8
+print(f"1. A_small: {A_small.shape}, mean: {mean.shape}, std: {std.shape}")
+
+# 2. broadcasting 표준화
+A_scaled = (A_small - mean) / std
+print(f"2. A_scaled shape: {A_scaled.shape}")
+
+# 3. 평균 0, 표준편차 1 검증
+print(f"3. 센서별 평균(0에 수렴): {np.round(A_scaled.mean(axis=0), 6)}")
+print(f"   센서별 표준편차(1에 수렴): {np.round(A_scaled.std(axis=0), 6)}")
+
+# 4. (1, 5) 명시적 reshape 비교
+mean_2d = mean.reshape(1, -1)
+print(f"4. 명시적 (1, 5) 사용 결과와 동일 여부: {np.allclose((A_small - mean_2d) / std, A_scaled)}")
+
+# 5. 잘못된 방향 빼기 (keepdims 미지정 vs 지정)
+try:
+    A_small - A_small.mean(axis=1)
+except ValueError as e:
+    print(f"5-1. keepdims 없이 axis=1 연산 시 오류: {e}")
+
+row_mean = A_small.mean(axis=1, keepdims=True)
+print(f"5-2. keepdims=True (24, 1) 연산 결과 shape: {(A_small - row_mean).shape}")
+print(f"     잘못 적용 후 센서별 평균: {np.round((A_small - row_mean).mean(axis=0)[:3], 3)}")
+
+# 6. 규칙 정리
+print("6. broadcasting 규칙: 뒤쪽 축부터 비교하여 크기가 같거나 한쪽 축 크기가 1이면 자동으로 축을 늘려서 연산합니다.")
