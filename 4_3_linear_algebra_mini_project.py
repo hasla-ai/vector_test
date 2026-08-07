@@ -122,3 +122,75 @@ print("\n5. 특성이 수백 개로 늘어날 때의 부담 설명:")
 print(" - 특성 수가 수백 개로 늘어나면 유사도 계산 시 특성 차원 축에 대한 연산량이 선형적으로 증가할 뿐만 아니라,")
 print("   '차원의 커스(Curse of Dimensionality)' 현상으로 인해 고차원 공간 상의 모든 점들 간 거리/유사도가 평이해져 변별력이 급격히 떨어집니다.")
 
+# ----------------------------------------------------
+# 문제 2-2 : 축소 공간에서 유사 고객 찾고 비교하기
+# ----------------------------------------------------
+print("=== [문제 2-2] 출력 결과 ===")
+
+# 1. 원본 공간 유사도 계산 및 Top 5 추출
+start_t = time.time()
+sim_orig = cosine_similarity(Xs_small)
+t_orig = (time.time() - start_t) * 1000
+top5_orig = np.argsort(sim_orig[0])[::-1][1:6]
+
+# 2. 누적 설명분산비 80%를 만족하는 k_search 산출
+pca_full = PCA(random_state=42).fit(Xs_small)
+cum_var = np.cumsum(pca_full.explained_variance_ratio_)
+k_search = np.argmax(cum_var >= 0.80) + 1
+cum_var_k = cum_var[k_search - 1]
+
+print(f"1. 선택된 k_search 차원 수: {k_search}차원")
+print(f"2. k_search 차원의 누적 설명분산비: {cum_var_k:.4f} ({cum_var_k*100:.2f}%)")
+
+# 3. 검색용 k_search차원 및 시각화용 2차원 공간 좌표 생성
+Z_search = pca_full.transform(Xs_small)[:, :k_search]
+Z_2d = pca_full.transform(Xs_small)[:, :2]
+
+# 4. 각 공간별 유사도 계산 및 시간 측정
+start_t = time.time()
+sim_search = cosine_similarity(Z_search)
+t_search = (time.time() - start_t) * 1000
+
+sim_2d = cosine_similarity(Z_2d)
+
+# 5. 0번 고객 기준 상위 5명 탐색
+top5_search = np.argsort(sim_search[0])[::-1][1:6]
+top5_2d = np.argsort(sim_2d[0])[::-1][1:6]
+
+# 원본 공간 결과와 겹치는 인원 수
+overlap_search = len(set(top5_orig).intersection(set(top5_search)))
+overlap_2d = len(set(top5_orig).intersection(set(top5_2d)))
+
+# 전체 유사도 행렬 간 피어슨 상관계수
+corr_search = np.corrcoef(sim_orig.ravel(), sim_search.ravel())[0, 1]
+corr_2d = np.corrcoef(sim_orig.ravel(), sim_2d.ravel())[0, 1]
+
+# 6. 용량 계산 (MB) 및 절감률
+mb_orig = Xs_small.nbytes / (1024 ** 2)
+mb_search = Z_search.nbytes / (1024 ** 2)
+mb_2d = Z_2d.nbytes / (1024 ** 2)
+
+reduction_search = (1 - mb_search / mb_orig) * 100
+reduction_2d = (1 - mb_2d / mb_orig) * 100
+
+# 7. 종합 비교 표 생성
+df_compare = pd.DataFrame({
+    '공간 구분': [f'원본 ({Xs_small.shape[1]}차원)', f'검색용 ({k_search}차원)', '시각화용 (2차원)'],
+    '0번 고객 Top5 Index': [top5_orig.tolist(), top5_search.tolist(), top5_2d.tolist()],
+    '원본과 겹치는 수': [5, overlap_search, overlap_2d],
+    '유사도 상관계수': [1.0000, corr_search, corr_2d],
+    '데이터 용량 (MB)': [mb_orig, mb_search, mb_2d],
+    '용량 절감률 (%)': [0.0, reduction_search, reduction_2d]
+})
+
+print("\n3. 공간별 유사도 검색 정밀도 및 용량 비교 표:")
+print(df_compare.to_string(index=False))
+
+print(f"\n4. 유사도 계산 시간 비교:")
+print(f" - 원본 공간: {t_orig:.2f} ms")
+print(f" - k_search 차원: {t_search:.2f} ms")
+print("   (특성 수 p=7로 작아 계산 연산의 주병목은 샘플 수 N의 제곱 N^2에 위치하므로, 차원 축소에 따른 계산 시간 이득은 미비함)")
+
+print("\n5. 공간 선택 기준 및 상황별 활용 서술:")
+print(" - [2차원 시각화 공간 (Z_2d)]: 60% 이상의 정보 손실이 있어 유사 고객 검색용으로는 적합하지 않으나, 마케팅 전략 수립 시 전반적인 고객 군집 분포를 한눈에 파악하는 모니터링 목적으로 사용합니다.")
+print(" - [k_search 공간 (Z_search)]: 원본 정보의 80% 이상을 보존하면서 데이터를 효율적으로 압축하므로, 데이터 저장 비용을 줄이면서도 실무 추천 서비스의 정확도를 유지해야 하는 경우 최선의 선택입니다.")
