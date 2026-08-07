@@ -91,8 +91,15 @@
     - PC1-PC2 산점도
 
 ```bash
-
+=== [문제 2-1] 출력 결과 ===
+1. 선택된 최소 주성분 개수 (k): 17
+2. k=17일 때 누적 설명분산비: 0.8021 (80.21%)
+3. 투영 결과 Z shape: (80, 17)
+4. 원본 대비 차원 축소율: 71.67% (60차원 -> 17차원)
+5. sklearn PCA 결과와의 절댓값 일치 여부: True
 ```
+
+![Customer_Embeddings_in_2D_Space(PC1vsPC2, k value)](./images\chapter_4_2_problem_2_1_embeddings_in_2D_space_PC1_vs_PC2.png)
 
 - 네 단계는 순서를 바꿀 수 없습니다. 표준화가 분해보다 먼저 와야 하고, 주성분 개수를 정한 뒤에 투영합니다.
 - 직접 구현한 투영 결과가 sklearn PCA와 일치하므로, 파이프라인 각 단계가 올바르게 구현되었음을 확인할 수 있습니다.
