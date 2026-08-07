@@ -259,3 +259,52 @@ print(df_vectors.head(5).to_string(index=False))
 print("\n4. 부호(Sign) 방향성 차이 발생 이유 서술:")
 print(" - 고유벡터 v 및 Singular Vector v는 Av = λv 또는 Xs*v = σu 를 만족할 때, 부호를 반대로 뒤집은 (-v) 역시 동일한 식을 만족합니다.")
 print(" - 즉, 주성분 축의 '방향성(Line)'이 동일하다면 양/음의 방향 기호는 수학적으로 완전히 동등하므로 결과상의 오류가 아닙니다.")
+
+# ----------------------------------------------------
+# 자체문제 : 공분산 행렬 분해 vs SVD 연산 속도 및 수치 안정성 비교
+# ----------------------------------------------------
+print("=== [문제 3-2] 출력 결과 ===")
+
+# 테스트 조건 설정 (N >> p 인 Bank Marketing 데이터 기준 & N < p 고차원 데이터 조건)
+def benchmark_pca_methods(X, iterations=10):
+    N, p = X.shape
+    
+    # 1) Covariance Matrix + Eigendecomposition 측정
+    t_cov_list = []
+    for _ in range(iterations):
+        start = time.time()
+        cov_matrix = np.cov(X, rowvar=False)  # O(N * p^2)
+        eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)  # O(p^3)
+        t_cov_list.append((time.time() - start) * 1000)
+        
+    # 2) SVD 직접 적용 측정 (Truncated/Economic SVD)
+    t_svd_list = []
+    for _ in range(iterations):
+        start = time.time()
+        U, S, Vt = np.linalg.svd(X, full_matrices=False)  # O(N * p^2)
+        t_svd_list.append((time.time() - start) * 1000)
+        
+    return np.mean(t_cov_list), np.mean(t_svd_list)
+
+# (A) 현재 데이터셋 (N=45,211, p=7)
+t_cov_real, t_svd_real = benchmark_pca_methods(Xs)
+
+# (B) 고차원 가상 데이터셋 (N=500, p=2,000) - N < p 조건
+np.random.seed(42)
+X_high_dim = np.random.randn(500, 2000)
+t_cov_high, t_svd_high = benchmark_pca_methods(X_high_dim)
+
+# 결과 표 출력
+df_benchmark = pd.DataFrame({
+    '데이터 조건': ['Bank Marketing (N=45,211, p=7)', '고차원 가상 데이터 (N=500, p=2,000)'],
+    '공분산+고유분해 시간 (ms)': [f"{t_cov_real:.3f} ms", f"{t_cov_high:.3f} ms"],
+    'SVD 연산 시간 (ms)': [f"{t_svd_real:.3f} ms", f"{t_svd_high:.3f} ms"]
+})
+
+print("1. 연산 속도 벤치마크 결과:")
+print(df_benchmark.to_string(index=False))
+
+print("\n2. sklearn 및 머신러닝 라이브러리가 SVD를 선호하는 핵심 이유:")
+print(" - [수치적 안정성 (Condition Number)]: 공분산 행렬 C = (X^T * X) / (N-1)를 직접 구하면 조건수가 제곱(Condition Number^2)이 되어 자릿수 손실(Loss of Significance) 및 정밀도 저하 위험이 커집니다.")
+print(" - [메모리 효율성]: X 행렬을 직접 SVD 분해하면 고차원 데이터(p가 매우 큰 경우)에서도 중간 단계인 (p x p) 공분산 행렬을 명시적으로 메모리에 할당하지 않고 계산할 수 있습니다.")
+print(" - [알고리즘 최적화]: Randomized SVD / Truncated SVD 등의 기법을 적용하면 전체 분해 없이 상위 k개 주성분만 O(N * p * k) 시간 복잡도로 빠르게 추출할 수 있습니다.")
