@@ -23,3 +23,24 @@ print('\n[인덱싱 Shape 예측 및 실행]')
 print('x[0]   예측: (10, 512)  | 실제:', x[0].shape, ' -> 문장 1개 (seq_len, hidden_dim)')
 print('x[0, 0] 예측: (512,)     | 실제:', x[0, 0].shape, '-> 단어 1개의 임베딩 벡터')
 
+print("\n=== [문제 1-2] 이미지 텐서 (batch, channel, height, width) 해석하기 ===")
+images = np.random.randn(16, 3, 224, 224)     # PyTorch NCHW
+gray = np.random.randn(16, 1, 224, 224)       # 흑백은 채널 1
+
+print('컬러 이미지 배치 (NCHW):', images.shape)
+print('흑백 이미지 배치 (NCHW):', gray.shape)
+print('이미지 1장           :', images[0].shape, '-> (channel, height, width)')
+print('1장의 R 채널         :', images[0, 0].shape, '-> (height, width)')
+
+images_nhwc = images.transpose(0, 2, 3, 1)    # TensorFlow NHWC 변환
+print('\nNCHW -> NHWC 변환:', images.shape, '->', images_nhwc.shape)
+
+print('\n[프레임워크별 이미지 텐서 표기 비교]')
+df_img_compare = pd.DataFrame({
+    '프레임워크': ['PyTorch', 'TensorFlow (기본)'],
+    '축 순서': ['(batch, channel, height, width)', '(batch, height, width, channel)'],
+    '명칭': ['NCHW', 'NHWC']
+})
+print(df_img_compare.to_string(index=False))
+print('\n축 순서 오해 시 발생 문제:')
+print(' -> 에러 메시지 없이 224 채널이나 3 높이/너비로 잘못 연산되어 모델 성능이 왜곡되거나 silent failure가 발생합니다.')

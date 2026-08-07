@@ -58,7 +58,21 @@ x[0, 0] 예측: (512,)     | 실제: (512,) -> 단어 1개의 임베딩 벡터
     - 두 표기 비교 표
 
 ```bash
+=== [문제 1-2] 이미지 텐서 (batch, channel, height, width) 해석하기 ===
+컬러 이미지 배치 (NCHW): (16, 3, 224, 224)
+흑백 이미지 배치 (NCHW): (16, 1, 224, 224)
+이미지 1장           : (3, 224, 224) -> (channel, height, width)
+1장의 R 채널         : (224, 224) -> (height, width)
 
+NCHW -> NHWC 변환: (16, 3, 224, 224) -> (16, 224, 224, 3)
+
+[프레임워크별 이미지 텐서 표기 비교]
+          프레임워크                            축 순서   명칭
+        PyTorch (batch, channel, height, width) NCHW
+TensorFlow (기본) (batch, height, width, channel) NHWC
+
+축 순서 오해 시 발생 문제:
+ -> 에러 메시지 없이 224 채널이나 3 높이/너비로 잘못 연산되어 모델 성능이 왜곡되거나 silent failure가 발생합니다.
 ```
 
 PyTorch | `(batch, channel, height, width)` | NCHW |
