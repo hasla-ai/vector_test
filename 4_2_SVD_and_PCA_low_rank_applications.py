@@ -186,5 +186,61 @@ print(" - 이로 인해 주성분이 데이터 전체의 잠재적 패턴이나 
 print(" - 따라서 각 항목이 공평한 비중으로 반영되도록 차원 축소 전 표준화(StandardScaler) 적용이 필수적입니다.")
 
 # ==========================================
-# 심화 1. 문제 3-1:
+# 심화 1. 저랭크 근사로 추천 후보 만들기
 # ==========================================
+# ==========================================
+# 문제 3-1: TruncatedSVD 임베딩으로 유사 고객과 추천 후보 찾기
+# ==========================================
+
+## SVD 분해 결과($U, \Sigma, V^T$)에서 상위 $k=5$개의 성분만 사용해 행렬을 복원($\hat{M}_5$)함으로써, 
+## 고객이 아직 구매하지 않았거나 적게 구매한 상품에 대해 잠재적 구매 선호도를 예측하는 코드
+
+# 1. 원본 데이터 M에 대해 SVD 수행 (k=5 저랭크 근사)
+# SVD 분해: M ≈ U_k * Sigma_k * Vt_k
+U, S, Vt = np.linalg.svd(M, full_matrices=False)
+
+k = 5
+U_k = U[:, :k]
+S_k = np.diag(S[:k])
+Vt_k = Vt[:k, :]
+
+# 2. k=5 저랭크 근사 행렬 M_hat_5 재구성
+M_hat_5 = U_k @ S_k @ Vt_k
+
+# 3. 원본 행렬과 근사 행렬 간 Frobenius Norm 오차 및 오차 비율 계산
+f_norm_M = np.linalg.norm(M, 'fro')
+f_norm_err = np.linalg.norm(M - M_hat_5, 'fro')
+reconstruction_err_ratio = (f_norm_err / f_norm_M) * 100
+
+# 4. 첫 번째 고객(Customer Index 0)의 추천 후보 찾기
+cust_0_actual = M[0, :]
+cust_0_pred = M_hat_5[0, :]
+
+# 원본에서 구매량이 0이었던 상품들의 마스크 생성
+zero_purchase_mask = (cust_0_actual == 0)
+
+# 구매량이 0인 상품 중 복원 값(예측 선호도)이 가장 높은 상위 3개 상품 추출
+pred_unpurchased = cust_0_pred.copy()
+pred_unpurchased[~zero_purchase_mask] = -np.inf  # 이미 구매한 상품은 제외
+
+top3_rec_idx = np.argsort(pred_unpurchased)[::-1][:3]
+top3_rec_codes = M_df.columns[top3_rec_idx].tolist()
+top3_rec_scores = cust_0_pred[top3_rec_idx]
+
+# 출력 결과
+print("=== [문제 3-1] 출력 결과 ===")
+print(f"1. 원본 행렬 M Frobenius Norm: {f_norm_M:.4f}")
+print(f"2. k=5 저랭크 근사 복원 오차(Frobenius Norm): {f_norm_err:.4f}")
+print(f"3. 상대 재구성 오차 비율: {reconstruction_err_ratio:.2f}%")
+
+print("\n4. 첫 번째 고객(Customer 0) 미구매 상품 중 잠재 선호도 상위 3개 추천 상품:")
+df_rec = pd.DataFrame({
+    'StockCode': top3_rec_codes,
+    '예측 구매 선호도 스코어': top3_rec_scores,
+    '실제 구매량': cust_0_actual[top3_rec_idx]
+})
+print(df_rec.to_string(index=False))
+
+print("\n5. 저랭크 근사 추천의 수학적 의미:")
+print(" - 상위 k개 특이값만 남김으로써 잠재 요인(Latent Factors) 기반의 패턴을 학습합니다.")
+print(" - 실제 구매량이 0이었더라도 노이즈가 제거된 저차원 공간 상에서 유사한 구매 패턴을 갖는 타 고객의 정보가 반영되어 잠재 선호도가 복원됩니다.")
