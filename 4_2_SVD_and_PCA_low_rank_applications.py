@@ -244,3 +244,70 @@ print(df_rec.to_string(index=False))
 print("\n5. 저랭크 근사 추천의 수학적 의미:")
 print(" - 상위 k개 특이값만 남김으로써 잠재 요인(Latent Factors) 기반의 패턴을 학습합니다.")
 print(" - 실제 구매량이 0이었더라도 노이즈가 제거된 저차원 공간 상에서 유사한 구매 패턴을 갖는 타 고객의 정보가 반영되어 잠재 선호도가 복원됩니다.")
+
+# ==========================================
+# 문제 3-2(자체 응용): 최적 $k$ 탐색 및 Eckart-Young-Mirsky 정리 검증
+# ==========================================
+
+# 1. 원본 데이터 M에 대해 SVD 수행
+U, S, Vt = np.linalg.svd(M, full_matrices=False)
+total_f_norm = np.linalg.norm(M, 'fro')
+
+k_values = [1, 3, 5, 10, 20]
+results = []
+
+for k in k_values:
+    # 저랭크 근사 행렬 구성
+    M_hat_k = U[:, :k] @ np.diag(S[:k]) @ Vt[:k, :]
+    
+    # 1) 실제 Frobenius norm 오차
+    actual_err = np.linalg.norm(M - M_hat_k, 'fro')
+    
+    # 2) Eckart-Young 정리에 따른 이론적 오차: sqrt(sum(S[k:]^2))
+    theoretical_err = np.sqrt(np.sum(S[k:] ** 2))
+    
+    # 오차 일치 여부 확인
+    is_matched = np.isclose(actual_err, theoretical_err, atol=1e-10)
+    
+    # 누적 설명분산비 (S^2 기반)
+    cum_var_ratio = np.sum(S[:k] ** 2) / np.sum(S ** 2)
+    
+    results.append({
+        'k': k,
+        '실제 복원 오차 (||M - M_hat||_F)': actual_err,
+        '이론적 오차 (sqrt(sum(S_i^2)))': theoretical_err,
+        '이론 일치 여부': is_matched,
+        '상대 복원 오차율 (%)': (actual_err / total_f_norm) * 100,
+        '누적 설명 분산 비율 (%)': cum_var_ratio * 100
+    })
+
+df_results = pd.DataFrame(results)
+
+# 출력 결과
+print("=== [문제 3-2] 출력 결과 ===")
+print("1. k 변화에 따른 Eckart-Young-Mirsky 정리 검증 결과:")
+print(df_results[['k', '실제 복원 오차 (||M - M_hat||_F)', '이론적 오차 (sqrt(sum(S_i^2)))', '이론 일치 여부', '누적 설명 분산 비율 (%)']].to_string(index=False))
+
+# 2. k에 따른 복원 오차 및 설명분산비 그래프 시각화
+fig, ax1 = plt.subplots(figsize=(8, 5))
+
+color = 'tab:red'
+ax1.set_xlabel('Rank k', fontsize=11)
+ax1.set_ylabel('Reconstruction Error (Frobenius Norm)', color=color, fontsize=11)
+ax1.plot(df_results['k'], df_results['실제 복원 오차 (||M - M_hat||_F)'], marker='o', color=color, linewidth=2, label='Reconstruction Error')
+ax1.tick_params(axis='y', labelcolor=color)
+ax1.grid(True, linestyle='--', alpha=0.5)
+
+ax2 = ax1.twinx()
+color = 'tab:blue'
+ax2.set_ylabel('Cumulative Variance Explained (%)', color=color, fontsize=11)
+ax2.plot(df_results['k'], df_results['누적 설명 분산 비율 (%)'], marker='s', color=color, linewidth=2, linestyle='--', label='Cum Variance (%)')
+ax2.tick_params(axis='y', labelcolor=color)
+
+plt.title('Low-Rank Approximation Performance vs. Rank k', fontsize=13)
+fig.tight_layout()
+plt.show()
+
+print("\n2. 결론 및 정리:")
+print(" - Eckart-Young-Mirsky 정리에 의해 k개 성분으로 절단한 저랭크 근사의 최적 오차는 나머지 특이값들의 제곱합 루트와 완벽히 일치합니다.")
+print(" - k가 증가함에 따라 복원 오차는 단조 감소하며, 정보 손실과 모델 복잡도 사이의 트레이드오프를 고려해 적절한 k를 선정을 진행합니다.")
