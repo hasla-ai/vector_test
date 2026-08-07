@@ -44,3 +44,46 @@ df_img_compare = pd.DataFrame({
 print(df_img_compare.to_string(index=False))
 print('\n축 순서 오해 시 발생 문제:')
 print(' -> 에러 메시지 없이 224 채널이나 3 높이/너비로 잘못 연산되어 모델 성능이 왜곡되거나 silent failure가 발생합니다.')
+
+
+# ----------------------------------------------------
+# 필수 2 : 길이가 제각각인 고객 이력을 하나의 텐서로 묶기
+# ----------------------------------------------------
+print("\n=== [문제 2-1] padding으로 시퀀스 길이 맞추기 ===")
+df, seqs = get_processed_seqs()
+lengths = [len(s) for s in seqs]
+print('고객별 시퀀스 길이:', lengths)
+
+# ① 그대로 묶었을 때 ValueError 발생 확인
+try:
+    raw = np.array(seqs.tolist())
+    print('① 그대로 묶었을 때 shape:', raw.shape)
+except ValueError as e:
+    print('① np.array() 그대로 -> ValueError 발생:', e)
+
+# ② dtype=object 명시 시 1차원 object 배열 확인
+raw_obj = np.array(seqs.tolist(), dtype=object)
+print('② dtype=object 지정  -> shape:', raw_obj.shape,
+      '/ dtype:', raw_obj.dtype, '/ ndim:', raw_obj.ndim)
+
+# ③ 정수 인코딩 및 데이터 기반 max_len padding 처리
+items = sorted(df['StockCode'].unique())
+item_to_id = {it: i + 1 for i, it in enumerate(items)}   # 0은 padding 전용 ID
+
+max_len = max(lengths)   # 실제 데이터의 최대 길이로 동적 계산
+encoded, mask = [], []
+for s in seqs:
+    ids = [item_to_id[x] for x in s[:max_len]]
+    pad = max_len - len(ids)
+    encoded.append(ids + [0] * pad)
+    mask.append([1] * len(ids) + [0] * pad)
+
+encoded, mask = np.array(encoded), np.array(mask)
+print(f'\n계산된 max_len: {max_len}')
+print('encoded shape:', encoded.shape, '-> (batch, seq_len)')
+print('mask shape   :', mask.shape)
+print('\n[encoded 앞 2행]:\n', encoded[:2])
+print('[mask 앞 2행]:\n', mask[:2])
+print('\nmask의 필요성:')
+print(' -> padding 처리된 0번 토큰은 실제 거래가 아니므로, 손실(Loss) 계산이나 어텐션 연산 시 모델이 이를 학습하지 않도록 차단하기 위해 필요합니다.')
+

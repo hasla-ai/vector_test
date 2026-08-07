@@ -104,7 +104,24 @@ TensorFlow(기본) | `(batch, height, width, channel)` | NHWC |
     - mask의 필요성 설명
 
 ```bash
+=== [문제 2-1] padding으로 시퀀스 길이 맞추기 ===
+고객별 시퀀스 길이: [1, 2, 3, 4, 5, 6, 7, 8]
+① np.array() 그대로 -> ValueError 발생: setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detected shape was (8,) + inhomogeneous part.
+② dtype=object 지정  -> shape: (8,) / dtype: object / ndim: 1
 
+계산된 max_len: 8
+encoded shape: (8, 8) -> (batch, seq_len)
+mask shape   : (8, 8)
+
+[encoded 앞 2행]:
+ [[1093    0    0    0    0    0    0    0]
+ [2002 2002    0    0    0    0    0    0]]
+[mask 앞 2행]:
+ [[1 0 0 0 0 0 0 0]
+ [1 1 0 0 0 0 0 0]]
+
+mask의 필요성:
+ -> padding 처리된 0번 토큰은 실제 거래가 아니므로, 손실(Loss) 계산이나 어텐션 연산 시 모델이 이를 학습하지 않도록 차단하기 위해 필요합니다.
 ```
     
 - 길이가 다른 리스트를 그대로 `np.array()`로 묶으면 numpy가 사각형 배열을 만들 수 없어 `ValueError: setting an array element with a sequence` 가 발생합니다. (numpy 1.24 이후)
