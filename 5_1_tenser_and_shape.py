@@ -87,3 +87,66 @@ print('[mask 앞 2행]:\n', mask[:2])
 print('\nmask의 필요성:')
 print(' -> padding 처리된 0번 토큰은 실제 거래가 아니므로, 손실(Loss) 계산이나 어텐션 연산 시 모델이 이를 학습하지 않도록 차단하기 위해 필요합니다.')
 
+print("\n=== [문제 2-2] 임베딩으로 3차원 텐서 만들기 ===")
+hidden_dim = 16
+E = np.random.randn(len(item_to_id) + 1, hidden_dim)
+E[0] = 0  # 0번(padding) 임베딩 벡터는 0으로 처리
+
+X_tensor = E[encoded]
+print('임베딩 테이블 E shape:', E.shape)
+print('결과 텐서 shape       :', X_tensor.shape, '-> (batch, seq_len, hidden_dim)')
+print(f'축 해석: 고객 {X_tensor.shape[0]}명을 한 번에 처리하고(batch), '
+      f'각 고객은 상품 {X_tensor.shape[1]}개(seq_len), '
+      f'각 상품은 {X_tensor.shape[2]}차원 벡터(hidden_dim)로 표현됩니다.')
+
+pad_pos = (mask == 0)
+print('\npadding 위치의 임베딩 벡터가 모두 0인가?:', np.allclose(X_tensor[pad_pos], 0))
+
+# hidden_dim = 32 변경 검증
+E32 = np.random.randn(len(item_to_id) + 1, 32)
+E32[0] = 0
+X_tensor_32 = E32[encoded]
+print('hidden_dim을 32로 변경 시 shape 예측: (8, 8, 32) | 실제:', X_tensor_32.shape)
+
+# ----------------------------------------------------
+# 심화 1 : 실행하기 전에 연산 가능 여부 판단하기
+# ----------------------------------------------------
+print("\n=== [문제 3-1] shape 조합별 연산 가능 여부 확인하기 ===")
+a = np.random.randn(32, 10, 512)
+b = np.random.randn(32, 10, 512)
+c = np.random.randn(32, 5, 512)
+d = np.random.randn(512)
+
+print(f'a.shape={a.shape}, b.shape={b.shape}, c.shape={c.shape}, d.shape={d.shape}\n')
+
+operations = [('a + b', lambda: a + b, '가능', '(32, 10, 512)'),
+              ('a + c', lambda: a + c, '불가능', 'ValueError'),
+              ('a + d', lambda: a + d, '가능', '(32, 10, 512)')]
+
+results = []
+for op_name, op_func, pred_status, pred_shape in operations:
+    try:
+        res = op_func()
+        exec_status = '성공'
+        exec_res = str(res.shape)
+    except ValueError as err:
+        exec_status = '실패'
+        exec_res = f'ValueError ({err})'
+    
+    results.append({
+        '연산 조합': op_name,
+        '예측 가능 여부': pred_status,
+        '예측 Result/Error': pred_shape,
+        '실제 실행 결과': exec_status,
+        '실제 Result/Error': exec_res
+    })
+
+df_res = pd.DataFrame(results)
+print(df_res.to_string(index=False))
+
+print('\n[해설 및 질문 답변]')
+print('1. a + c를 가능하게 하려면?:')
+print(' -> 시퀀스 차원(축 1)의 크기가 10과 5로 다르므로, c의 시퀀스를 padding하여 (32, 10, 512)로 맞추거나 슬라이싱 a[:, :5, :]을 적용해야 합니다.')
+
+print('2. 브로드캐스팅 축 비교 규칙:')
+print(' -> 두 텐서의 shape을 "뒤쪽 축(마지막 차원)"부터 비교할 때, 각 차원의 크기가 동일하거나 어느 한쪽이 1인 경우에만 연산(브로드캐스팅)이 가능합니다.')
