@@ -194,3 +194,68 @@ print("   (특성 수 p=7로 작아 계산 연산의 주병목은 샘플 수 N�
 print("\n5. 공간 선택 기준 및 상황별 활용 서술:")
 print(" - [2차원 시각화 공간 (Z_2d)]: 60% 이상의 정보 손실이 있어 유사 고객 검색용으로는 적합하지 않으나, 마케팅 전략 수립 시 전반적인 고객 군집 분포를 한눈에 파악하는 모니터링 목적으로 사용합니다.")
 print(" - [k_search 공간 (Z_search)]: 원본 정보의 80% 이상을 보존하면서 데이터를 효율적으로 압축하므로, 데이터 저장 비용을 줄이면서도 실무 추천 서비스의 정확도를 유지해야 하는 경우 최선의 선택입니다.")
+
+# ----------------------------------------------------
+# 문제 3-1 : SVD vs 고유분해 vs sklearn 3가지 방식 구현 및 검증
+# ----------------------------------------------------
+print("=== [문제 3-1] 출력 결과 ===")
+
+N, p = Xs.shape
+
+# 1) sklearn PCA 방식
+pca_sk = PCA(n_components=2, random_state=42)
+Z_sk = pca_sk.fit_transform(Xs)
+V_sk = pca_sk.components_.T  # Shape: (p, 2)
+
+# 2) Covariance Matrix + Eigendecomposition 방식
+cov_matrix = np.cov(Xs, rowvar=False)
+eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
+
+# 내림차순 정렬
+idx = np.argsort(eigenvalues)[::-1]
+eigenvalues = eigenvalues[idx]
+eigenvectors = eigenvectors[:, idx]
+
+V_eig = eigenvectors[:, :2]  # 상위 2개 고유벡터
+Z_eig = Xs @ V_eig           # 투영 좌표 Z
+
+# 3) SVD (Singular Value Decomposition) 방식 (Xs = U * S * Vt)
+U, S, Vt = np.linalg.svd(Xs, full_matrices=False)
+V_svd = Vt.T[:, :2]          # 우단수고유벡터 (Right Singular Vectors)
+Z_svd = Xs @ V_svd           # 또는 U[:, :2] @ np.diag(S[:2])
+
+# ----------------------------------------------------
+# 결과 비교 및 검증 (부호 반전 처리 포함)
+# ----------------------------------------------------
+# PCA에서 주성분 축의 방향(부호)은 ±1 둘 다 정답이므로 절대값 오차 계산
+diff_V_eig = np.abs(np.abs(V_sk) - np.abs(V_eig)).max()
+diff_V_svd = np.abs(np.abs(V_sk) - np.abs(V_svd)).max()
+
+diff_Z_eig = np.abs(np.abs(Z_sk) - np.abs(Z_eig)).max()
+diff_Z_svd = np.abs(np.abs(Z_sk) - np.abs(Z_svd)).max()
+
+print("1. 주성분 벡터(V) 최대 절대값 차이:")
+print(f" - sklearn vs Eigendecomposition : {diff_V_eig:.2e}")
+print(f" - sklearn vs SVD               : {diff_V_svd:.2e}")
+
+print("\n2. 투영 좌표(Z) 최대 절대값 차이:")
+print(f" - sklearn vs Eigendecomposition : {diff_Z_eig:.2e}")
+print(f" - sklearn vs SVD               : {diff_Z_svd:.2e}")
+
+# 3. 주성분 벡터(V_1, V_2) 비교 표 출력
+df_vectors = pd.DataFrame({
+    'Feature': X_df.columns,
+    'V1 (sklearn)': V_sk[:, 0],
+    'V1 (Eig)': V_eig[:, 0],
+    'V1 (SVD)': V_svd[:, 0],
+    'V2 (sklearn)': V_sk[:, 1],
+    'V2 (Eig)': V_eig[:, 1],
+    'V2 (SVD)': V_svd[:, 1]
+})
+
+print("\n3. 주성분 벡터 V 상위 5개 특성 비교 (방향 오차 확인):")
+print(df_vectors.head(5).to_string(index=False))
+
+print("\n4. 부호(Sign) 방향성 차이 발생 이유 서술:")
+print(" - 고유벡터 v 및 Singular Vector v는 Av = λv 또는 Xs*v = σu 를 만족할 때, 부호를 반대로 뒤집은 (-v) 역시 동일한 식을 만족합니다.")
+print(" - 즉, 주성분 축의 '방향성(Line)'이 동일하다면 양/음의 방향 기호는 수학적으로 완전히 동등하므로 결과상의 오류가 아닙니다.")
