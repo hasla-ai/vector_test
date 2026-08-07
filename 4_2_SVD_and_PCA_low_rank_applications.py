@@ -6,6 +6,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.decomposition import TruncatedSVD
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 # ==========================================
 # 필수 1 : PCA와 SVD가 사실 같은 계산이라는 것 확인하기
@@ -311,3 +313,60 @@ plt.show()
 print("\n2. 결론 및 정리:")
 print(" - Eckart-Young-Mirsky 정리에 의해 k개 성분으로 절단한 저랭크 근사의 최적 오차는 나머지 특이값들의 제곱합 루트와 완벽히 일치합니다.")
 print(" - k가 증가함에 따라 복원 오차는 단조 감소하며, 정보 손실과 모델 복잡도 사이의 트레이드오프를 고려해 적절한 k를 선정을 진행합니다.")
+
+# ==========================================
+# 문제 3-3(자체 응용): 성능 평가 코드 (Train/Test Split & RMSE/MAE)
+# ==========================================
+
+print("=== [문제 3-3] 성능 평가 코드 (Train/Test Split & RMSE/MAE) 출력 결과 ===")
+
+def evaluate_low_rank_recommendation(data, k_components=[2, 5, 8, 12, 16, 20], test_ratio=0.2, seed=42):
+    np.random.seed(seed)
+    train_data = data.copy()
+    
+    # 구매가 일어난 Cell(Non-zero)의 위치 탐색
+    non_zero_indices = np.argwhere(data > 0)
+    n_test = int(len(non_zero_indices) * test_ratio)
+    
+    test_mask_idx = np.random.choice(len(non_zero_indices), size=n_test, replace=False)
+    test_indices = non_zero_indices[test_mask_idx]
+    
+    # Train 세트를 만들기 위해 마스킹 (0으로 변환)
+    for r, c in test_indices:
+        train_data[r, c] = 0
+        
+    eval_results = []
+    
+    for k_val in k_components:
+        # TruncatedSVD 적합
+        svd = TruncatedSVD(n_components=k_val, random_state=seed)
+        train_reconstructed = svd.fit_transform(train_data) @ svd.components_
+        
+        # Train & Test 실제값 및 예측값 수집
+        train_true = train_data[train_data > 0]
+        train_pred = train_reconstructed[train_data > 0]
+        
+        test_true = data[test_indices[:, 0], test_indices[:, 1]]
+        test_pred = train_reconstructed[test_indices[:, 0], test_indices[:, 1]]
+        
+        # 오차 계산 (RMSE & MAE)
+        train_rmse = np.sqrt(mean_squared_error(train_true, train_pred))
+        test_rmse = np.sqrt(mean_squared_error(test_true, test_pred))
+        test_mae = mean_absolute_error(test_true, test_pred)
+        
+        eval_results.append({
+            'k': k_val,
+            'Train RMSE': train_rmse,
+            'Test RMSE': test_rmse,
+            'Test MAE': test_mae
+        })
+        
+    return pd.DataFrame(eval_results)
+
+eval_df = evaluate_low_rank_recommendation(M, k_components=[2, 5, 8, 12, 16, 20])
+print(eval_df.to_string(index=False))
+
+# 최적 k 선택 및 가이드 안내
+best_k = eval_df.loc[eval_df['Test RMSE'].idxmin(), 'k']
+print(f"\n★ 최소 Test RMSE를 기록한 최적의 k (Optimal k): {int(best_k)}")
+print("="*50)
