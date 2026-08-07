@@ -109,3 +109,31 @@ print(f"     잘못 적용 후 센서별 평균: {np.round((A_small - row_mean).
 
 # 6. 규칙 정리
 print("6. broadcasting 규칙: 뒤쪽 축부터 비교하여 크기가 같거나 한쪽 축 크기가 1이면 자동으로 축을 늘려서 연산합니다.")
+
+print("\n" + "=" * 60)
+print("[문제 3-1 : 세 가지 행렬곱의 결과 shape 추론하기]")
+print("=" * 60)
+
+cases = [
+    ('단일 행렬곱', np.random.randn(10, 512), np.random.randn(512, 256), '(10, 256)'),
+    ('배치 행렬곱', np.random.randn(32, 10, 512), np.random.randn(32, 512, 256), '(32, 10, 256)'),
+    ('broadcasting 행렬곱', np.random.randn(32, 10, 512), np.random.randn(512, 256), '(32, 10, 256)'),
+    ('4차원 배치 행렬곱', np.random.randn(32, 8, 10, 64), np.random.randn(32, 8, 64, 10), '(32, 8, 10, 10)'),
+]
+
+rows = []
+for name, x, y, expect in cases:
+    rows.append({
+        '연산': name,
+        '입력 shape': f'{x.shape} @ {y.shape}',
+        '예측': expect,
+        '실제': str((x @ y).shape)
+    })
+
+print(pd.DataFrame(rows).to_string(index=False))
+
+print("\n오류 케이스 확인:")
+try:
+    np.random.randn(32, 10, 512) @ np.random.randn(256, 512)
+except ValueError as e:
+    print(f"안쪽 차원 불일치 예외: {e}")
