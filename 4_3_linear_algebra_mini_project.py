@@ -84,3 +84,41 @@ plt.grid(True, linestyle='--', alpha=0.5)
 plt.tight_layout()
 plt.show()
 
+# ----------------------------------------------------
+# 문제 2-1 : 원본 공간에서 유사 고객 찾기
+# ----------------------------------------------------
+print("=== [문제 2-1] 출력 결과 ===")
+
+# 1. 표준화된 데이터 앞 2,000명 샘플링 (Xs_small)
+Xs_small = Xs[:2000]
+
+# 2. cosine_similarity로 유사도 행렬 계산 및 시간 측정
+start_time = time.time()
+sim_orig = cosine_similarity(Xs_small)
+calc_time_ms = (time.time() - start_time) * 1000
+
+# 3. 유사도 행렬 shape 및 메모리 사용량(원소 수, nbytes) 확인
+matrix_shape = sim_orig.shape
+num_elements = sim_orig.size
+memory_mb = sim_orig.nbytes / (1024 ** 2)
+
+# 4. 0번 고객과 유사도가 높은 상위 5명 탐색 (자기 자신 인덱스 0 제외)
+top5_indices = np.argsort(sim_orig[0])[::-1][1:6]
+top5_sim_scores = sim_orig[0][top5_indices]
+
+# 출력 결과
+print(f"1. 유사도 행렬 Shape: {matrix_shape}")
+print(f"2. 유사도 계산 소요 시간: {calc_time_ms:.2f} ms")
+print(f"3. 유사도 행렬 메모리 사용량: {num_elements:,} 개 원소 ({memory_mb:.2f} MB)")
+
+print("\n4. 0번 고객 기준 원본 공간 유사 고객 Top 5:")
+df_top5 = pd.DataFrame({
+    '고객 인덱스 (Index)': top5_indices,
+    '코사인 유사도 (Similarity)': top5_sim_scores
+})
+print(df_top5.to_string(index=False))
+
+print("\n5. 특성이 수백 개로 늘어날 때의 부담 설명:")
+print(" - 특성 수가 수백 개로 늘어나면 유사도 계산 시 특성 차원 축에 대한 연산량이 선형적으로 증가할 뿐만 아니라,")
+print("   '차원의 커스(Curse of Dimensionality)' 현상으로 인해 고차원 공간 상의 모든 점들 간 거리/유사도가 평이해져 변별력이 급격히 떨어집니다.")
+
