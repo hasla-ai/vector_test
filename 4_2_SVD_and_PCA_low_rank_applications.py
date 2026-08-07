@@ -42,3 +42,56 @@ df_comp1 = pd.DataFrame({
 })
 print(df_comp1.to_string(index=False))
 
+
+# ==========================================
+# 문제 1-2 : 특이값에서 설명 분산 계산하기
+# ==========================================
+
+n_samples = M.shape[0]
+
+# 1. 중심화 후 SVD 수행하여 특이값 S 구하기
+Mc = M - np.mean(M, axis=0)
+_, S, _ = np.linalg.svd(Mc, full_matrices=False)
+
+# 2. 특이값에서 직접 설명 분산 및 설명분산비 계산
+# S^2 / (n_samples - 1)
+explained_variance_manual = (S ** 2) / (n_samples - 1)
+explained_variance_ratio_manual = explained_variance_manual / np.sum(explained_variance_manual)
+
+# 3. sklearn PCA(n_components=5) 적합
+pca = PCA(n_components=5, random_state=42)
+pca.fit(M)
+
+# 4. 상위 5개 비교 및 검증
+var_matched = np.allclose(explained_variance_manual[:5], pca.explained_variance_, atol=1e-10)
+ratio_matched = np.allclose(explained_variance_ratio_manual[:5], pca.explained_variance_ratio_, atol=1e-10)
+
+# 5. 출력 결과 작성
+print("=== [문제 1-2] 출력 결과 ===")
+print("1. 직접 계산한 설명 분산과 sklearn PCA 비교:")
+df_var = pd.DataFrame({
+    '직접 계산 (S^2 / (n-1))': explained_variance_manual[:5],
+    'sklearn PCA': pca.explained_variance_,
+    '차이': np.abs(explained_variance_manual[:5] - pca.explained_variance_)
+})
+print(df_var.to_string(index=True))
+
+print(f"\n2. 설명분산비 일치 여부: {ratio_matched}")
+print(f"3. 상위 5개 주성분의 누적 설명분산비: {np.sum(pca.explained_variance_ratio_[:5]):.4f} ({np.sum(pca.explained_variance_ratio_[:5])*100:.2f}%)")
+
+# ==========================================
+# 필수 2: 
+# ==========================================
+
+# ==========================================
+# 문제 2-1: 
+# ==========================================
+
+
+# ==========================================
+# 문제 2-2:
+# ==========================================
+
+# ==========================================
+# 심화 1. 문제 3-1:
+# ==========================================
