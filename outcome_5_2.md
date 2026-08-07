@@ -92,7 +92,16 @@
     - 축 개수를 맞춰야 하는 이유
 
 ```bash
-
+============================================================
+[문제 2-1 : expand_dims와 squeeze로 축 조작하기]
+============================================================
+1. 원본 sample shape: (6, 5)
+   expand_dims(axis= 0) -> shape: (1, 6, 5)
+   expand_dims(axis= 1) -> shape: (6, 1, 5)
+   expand_dims(axis=-1) -> shape: (6, 5, 1)
+4. squeeze(axis=0) 후 shape: (6, 5), 원본 일치: True
+5. 크기가 1이 아닌 축 squeeze 실패 예외: cannot select an axis to squeeze out which has size not equal to one
+6. 이유: 축 개수(ndim)가 다르면 프레임워크에서 다른 구조의 텐서로 인식하여 차원 불일치 에러를 발생시킵니다.
 ```
 
     - `expand_dims`는 지정한 위치에 **크기 1인 축을 새로 끼워 넣습니다.** 원소 수는 그대로이고 축 개수만 늘어납니다.
