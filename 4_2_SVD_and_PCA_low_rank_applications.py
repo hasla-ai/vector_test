@@ -128,8 +128,62 @@ plt.tight_layout()
 plt.show()
 
 # ==========================================
-# 문제 2-2:
+# 문제 2-2: 표준화를 생략하면 어떻게 되는지 확인하기
 # ==========================================
+
+# 1. 표준화 미적용 (중심화만 진행)
+Mc = M - np.mean(M, axis=0)
+_, S_raw, Vt_raw = np.linalg.svd(Mc, full_matrices=False)
+var_raw = (S_raw ** 2) / (M.shape[0] - 1)
+ratio_raw = var_raw / np.sum(var_raw)
+
+# 2. 표준화 적용
+scaler = StandardScaler()
+M_scaled = scaler.fit_transform(M)
+_, S_scaled, Vt_scaled = np.linalg.svd(M_scaled, full_matrices=False)
+var_scaled = (S_scaled ** 2) / (M.shape[0] - 1)
+ratio_scaled = var_scaled / np.sum(var_scaled)
+
+# 지표 1: PC1 설명분산비
+pc1_ratio_raw = ratio_raw[0]
+pc1_ratio_scaled = ratio_scaled[0]
+
+# 지표 2: PC1 로딩 집중도 (max |Vt[0]|)
+loading_max_raw = np.max(np.abs(Vt_raw[0]))
+loading_max_scaled = np.max(np.abs(Vt_scaled[0]))
+
+# 지표 3: 누적 설명분산비 80% 도달에 필요한 k
+k_raw = np.argmax(np.cumsum(ratio_raw) >= 0.80) + 1
+k_scaled = np.argmax(np.cumsum(ratio_scaled) >= 0.80) + 1
+
+# 3. 표준화 미적용 시 PC1 절댓값 상위 3개 상품 찾기
+top3_prod_idx = np.argsort(np.abs(Vt_raw[0]))[::-1][:3]
+top3_prod_codes = M_df.columns[top3_prod_idx].tolist()
+
+# 4. 해당 상품들의 원본 구매량 표준편차 순위 확인
+std_per_product = np.std(M, axis=0, ddof=1)
+std_ranks = np.argsort(np.argsort(-std_per_product)) + 1  # 1등부터 순위 산출
+
+# 출력 결과
+print("=== [문제 2-2] 출력 결과 ===")
+print(f"1. PC1 설명분산비 비교: [표준화 전] {pc1_ratio_raw:.4f} vs [표준화 후] {pc1_ratio_scaled:.4f}")
+print(f"   (설명분산비만 보고는 표준화 필요성을 판별할 수 없음)")
+print(f"2. PC1 로딩 집중도 (max|Vt[0]|) 비교: [표준화 전] {loading_max_raw:.4f} vs [표준화 후] {loading_max_scaled:.4f}")
+print(f"3. 80% 분산 설명에 필요한 k 비교: [표준화 전] {k_raw}개 vs [표준화 후] {k_scaled}개")
+
+print("\n4. 표준화 미적용 시 PC1 주도 상위 3개 상품 및 원본 표준편차 순위:")
+df_top3 = pd.DataFrame({
+    'StockCode': top3_prod_codes,
+    'PC1 가중치 (Vt[0])': Vt_raw[0][top3_prod_idx],
+    '원본 표준편차': std_per_product[top3_prod_idx],
+    '전체 60개 중 표준편차 순위': [f"{rank}위" for rank in std_ranks[top3_prod_idx]]
+})
+print(df_top3.to_string(index=False))
+
+print("\n5. 표준화 생략 시 발생하는 문제점 요약:")
+print(" - 표준화를 생략하면 구매량 변동성(표준편차)이 큰 특정 상품이 PC1 가중치를 독점합니다.")
+print(" - 이로 인해 주성분이 데이터 전체의 잠재적 패턴이나 유사 구조가 아닌 '스케일이 큰 상품'의 크기만 반영하게 됩니다.")
+print(" - 따라서 각 항목이 공평한 비중으로 반영되도록 차원 축소 전 표준화(StandardScaler) 적용이 필수적입니다.")
 
 # ==========================================
 # 심화 1. 문제 3-1:
