@@ -370,3 +370,45 @@ print(eval_df.to_string(index=False))
 best_k = eval_df.loc[eval_df['Test RMSE'].idxmin(), 'k']
 print(f"\n★ 최소 Test RMSE를 기록한 최적의 k (Optimal k): {int(best_k)}")
 print("="*50)
+
+import matplotlib.pyplot as plt
+
+fig, ax1 = plt.subplots(figsize=(8, 5))
+
+# 1. 왼쪽 Y축: Train RMSE (초록색)
+color_train = 'tab:green'
+ax1.set_xlabel('Latent Factor k', fontsize=11, fontweight='bold')
+ax1.set_ylabel('Train RMSE', color=color_train, fontsize=11, fontweight='bold')
+line1 = ax1.plot(eval_df['k'], eval_df['Train RMSE'], marker='o', color=color_train, 
+                 linewidth=2, label='Train RMSE (Underfitting check)')
+ax1.tick_params(axis='y', labelcolor=color_train)
+ax1.grid(True, linestyle='--', alpha=0.5)
+
+# 2. 오른쪽 Y축: Test RMSE (빨간색)
+ax2 = ax1.twinx()
+color_test = 'tab:red'
+ax2.set_ylabel('Test RMSE', color=color_test, fontsize=11, fontweight='bold')
+line2 = ax2.plot(eval_df['k'], eval_df['Test RMSE'], marker='s', color=color_test, 
+                 linewidth=2, linestyle='--', label='Test RMSE (Overfitting check)')
+ax2.tick_params(axis='y', labelcolor=color_test)
+
+# 3. 최적의 k=8 지점 강조 표시 (Star Marker & Annotation)
+best_k_val = int(best_k)
+best_test_rmse = eval_df.loc[eval_df['k'] == best_k_val, 'Test RMSE'].values[0]
+
+ax2.plot(best_k_val, best_test_rmse, marker='*', markersize=15, color='gold', 
+         markeredgecolor='black', label=f'Optimal k={best_k_val}')
+ax2.annotate(f'Optimal k={best_k_val}\n(Min Test RMSE: {best_test_rmse:.1f})',
+             xy=(best_k_val, best_test_rmse),
+             xytext=(best_k_val + 1.5, best_test_rmse + 5),
+             arrowprops=dict(facecolor='black', shrink=0.08, width=1, headwidth=6),
+             fontsize=10, fontweight='bold', bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.5))
+
+# 4. 범례 및 제목 통합
+lines = line1 + line2
+labels = [l.get_label() for l in lines]
+ax1.legend(lines, labels, loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=2, frameon=True)
+
+plt.title('Train vs Test RMSE by Latent Factor k (Bias-Variance Tradeoff)', fontsize=13, y=1.18, fontweight='bold')
+fig.tight_layout()
+plt.show()

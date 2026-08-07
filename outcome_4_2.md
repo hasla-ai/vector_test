@@ -305,3 +305,10 @@ Train RMSE는 $199$까지 크게 떨어졌는데 Test RMSE는 증가한다는 �
     $k \ge 12$ 이상에서는 Train RMSE는 계속 감소하지만 Test RMSE가 다시 상승하는 과적합(Overfitting) 현상이 발생함.
 - 최적 파라미터 도출: Test RMSE가 가장 낮은 **$k=8$**을 본 고객-상품 구매 예측 모델의 최적 차원 수로 선정함.
 
+![plot_train_vs_test_RMSE_by_latent_factor_k_bias_variance_tradeoff](./images\chapter_4_2_problem_self_3_3_plot_train_vs_test_RMSE_by_latent_factor_k_bias_variance_tradeoff.png)
+
+그래프 해석
+
+초록선 (Train RMSE): $k$가 증가할수록 계속 오른쪽 아래로 떨어집니다.
+빨간선 (Test RMSE): $k=8$까지 내려가다가 $k=12$부터 다시 반등하며 U자 형태를 그립니다.
+노란 별 표시 ($k=8$): 과소적합과 과적합 사이에서 일반화 성능이 가장 뛰어난 최적의 오프셋 지점을 강조합니다.
