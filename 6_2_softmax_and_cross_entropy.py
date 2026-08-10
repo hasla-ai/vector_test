@@ -166,6 +166,7 @@ loss_report = build_token_loss_report(
     vocabulary=vocabulary,
 )
 
+
 print("=" * 70)
 print("[문제 2-1: 위치별 토큰 예측 결과 표]")
 print("=" * 70)
@@ -189,4 +190,67 @@ print(f"- 기대한 다음 토큰: {target_row['expected_next_token']}")
 print(f"- 실제 Top-1 예측: {target_row['predicted_token']}")
 print(f"- 정답 확률: {target_row['target_probability']:.4f}")
 print(f"- 개선이 필요한 이유: 모델이 '재설정' 입력 시점에 정답인 '방법' 대신 오답인 '사내'를 가장 높은 확률로 예측하여 NLL이 2.0039로 가장 높게 치솟았습니다. 현재 초기화된 임베딩과 가중치(W_vocab) 상에서 특정 토큰 편향이 존재하므로, 언어 모델 가중치 학습(Training) 과정에서 출력 프로젝션 파라미터의 정규화 및 크로스 엔트로피 손실 기반 최적화가 필수적입니다.")
+print("=" * 70)
+
+
+# 심화 1. Temperature 정책 비교하기
+## ▶ 문제 3-1: 내부 업무 챗봇의 확률분포 변화 분석
+
+def compare_temperature(logits, target_index, temperatures, vocabulary):
+    """Temperature별 확률분포 요약을 반환하세요."""
+    logits = np.asarray(logits, dtype=np.float64)
+    results = []
+
+    for T in temperatures:
+        # 1. Temperature 적용 (Logits / T)
+        scaled_logits = logits / T
+
+        # 2. Softmax 적용하여 확률분포 산출
+        probs = stable_softmax(scaled_logits, axis=-1)
+
+        # 3. Top-1 토큰 및 확률
+        top1_idx = np.argmax(probs)
+        top1_token = vocabulary[top1_idx]
+        top1_prob = float(probs[top1_idx])
+
+        # 4. 정답 토큰 확률
+        target_prob = float(probs[target_index])
+
+        # 5. 엔트로피(Entropy) 계산: -sum(p * log(p))
+        # 수치 안정성을 위해 p=0 인 경우 log(0)=NaN 방지 처리 (1e-15 적용)
+        safe_probs = np.clip(probs, 1e-15, 1.0)
+        entropy = float(-np.sum(probs * np.log(safe_probs)))
+
+        results.append({
+            "temperature": T,
+            "top1_token": top1_token,
+            "top1_prob": top1_prob,
+            "target_prob": target_prob,
+            "entropy": entropy,
+        })
+
+    return pd.DataFrame(results)
+
+# ----------------------------------------------------
+# 심화 3-1 실행 및 비교 분석
+# ----------------------------------------------------
+# 1. 문제 2-1에서 구한 가장 큰 NLL 위치(index 3, '재설정')의 Logits 가져오기
+logits_all = context @ W_vocab + b_vocab
+max_nll_idx = loss_report["max_nll_idx"]  # index 3
+target_logits = logits_all[max_nll_idx]
+target_idx = targets[max_nll_idx]  # 정답 index 4 ('방법')
+
+temperatures = [0.6, 1.0, 1.4]
+
+df_temp_summary = compare_temperature(
+    logits=target_logits,
+    target_index=target_idx,
+    temperatures=temperatures,
+    vocabulary=vocabulary,
+)
+
+print("=" * 70)
+print("[Temperature별 확률분포 요약 표]")
+print("=" * 70)
+print(df_temp_summary.to_string(index=False))
 print("=" * 70)
