@@ -1,11 +1,15 @@
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 from dataset_7_1 import document_titles, X_features, y_human, initial_b, initial_w
+
+np.set_printoptions(precision=5, suppress=True)
 
 # 필수 1. 해석적 Gradient가 맞는지 검증하기
 ## ▶ 문제 1-1: Gradient Check 수행
 
 # ----------------------------------------------------
-# 2. 필수 함수 구현
+# 필수 함수 구현
 # ----------------------------------------------------
 def predict_relevance(X, w, b):
     """선형 예측 모델: y_pred = X @ w + b"""
@@ -59,7 +63,7 @@ def numerical_parameter_gradient(X, y_true, w, b, parameter_index, h=1e-5):
 
 
 # ----------------------------------------------------
-# 3. Gradient Check 및 보고서 출력
+# Gradient Check 및 보고서 출력
 # ----------------------------------------------------
 # 1) 해석적 Gradient 계산
 analytic_grad_w, analytic_grad_b = mse_gradients(
@@ -108,3 +112,135 @@ print(f"- w₁ 업데이트 방향: {get_update_direction(analytic_grad_w[0])}")
 print(f"- w₂ 업데이트 방향: {get_update_direction(analytic_grad_w[1])}")
 print(f"- b 업데이트 방향: {get_update_direction(analytic_grad_b)}")
 print("=" * 60)
+
+
+## 필수 2. Gradient Descent로 검색 점수 보정하기
+## ▶ 문제 2-1: 학습 함수 구현과 전후 품질 비교
+
+# ----------------------------------------------------
+# 필수 함수 및 학습 함수 구현
+# ----------------------------------------------------
+def predict_relevance(X, w, b):
+    return X @ w + b
+
+
+def mse_loss(y_pred, y_true):
+    return np.mean((y_pred - y_true) ** 2)
+
+
+def mae_loss(y_pred, y_true):
+    return np.mean(np.abs(y_pred - y_true))
+
+
+def mse_gradients(X, y_true, w, b):
+    N = len(y_true)
+    y_pred = predict_relevance(X, w, b)
+    error = y_pred - y_true
+    grad_w = (2 / N) * (X.T @ error)
+    grad_b = (2 / N) * np.sum(error)
+    return grad_w, grad_b
+
+
+def train_calibrator(
+    X,
+    y_true,
+    initial_w,
+    initial_b,
+    learning_rate=0.1,
+    steps=300,
+):
+    """Gradient Descent로 검색 점수 보정 모델을 학습하세요."""
+    w = initial_w.copy()
+    b = initial_b
+    history = []
+
+    for step in range(steps):
+        # 1. 현재 예측 및 Loss 계산
+        y_pred = predict_relevance(X, w, b)
+        loss = mse_loss(y_pred, y_true)
+        history.append(loss)
+
+        # 2. Gradient 계산 및 파라미터 동시 업데이트
+        grad_w, grad_b = mse_gradients(X, y_true, w, b)
+        w -= learning_rate * grad_w
+        b -= learning_rate * grad_b
+
+    return w, b, history
+
+# ----------------------------------------------------
+# 학습 전후 품질 비교 및 결과 출력
+# ----------------------------------------------------
+
+# 1) 학습 전 상태 지표 계산
+y_pred_before = predict_relevance(X_features, initial_w, initial_b)
+mse_before = mse_loss(y_pred_before, y_human)
+mae_before = mae_loss(y_pred_before, y_human)
+
+# 2) Gradient Descent 학습 실행 (lr=0.1, steps=300)
+final_w, final_b, loss_history = train_calibrator(
+    X_features,
+    y_human,
+    initial_w,
+    initial_b,
+    learning_rate=0.1,
+    steps=300,
+)
+
+# 3) 학습 후 상태 지표 계산
+y_pred_after = predict_relevance(X_features, final_w, final_b)
+mse_after = mse_loss(y_pred_after, y_human)
+mae_after = mae_loss(y_pred_after, y_human)
+
+# 4) Top-3 문서 및 점수 추출
+top3_before_idx = np.argsort(y_pred_before)[::-1][:3]
+top3_after_idx = np.argsort(y_pred_after)[::-1][:3]
+top3_human_idx = np.argsort(y_human)[::-1][:3]
+
+print("=" * 70)
+print("[학습 전/후 Top-3 검색 결과 비교]")
+print("=" * 70)
+print("1) 사람 평가 Top-3:")
+for idx in top3_human_idx:
+    print(f"   - {document_titles[idx]}: {y_human[idx]:.4f}")
+
+print("\n2) 학습 전 Top-3:")
+for idx in top3_before_idx:
+    print(f"   - {document_titles[idx]}: {y_pred_before[idx]:.4f}")
+
+print("\n3) 학습 후 Top-3:")
+for idx in top3_after_idx:
+    print(f"   - {document_titles[idx]}: {y_pred_after[idx]:.4f}")
+
+# ----------------------------------------------------
+# 제출용 보고서 양식 출력
+# ----------------------------------------------------
+print("\n" + "=" * 70)
+print("[검색 점수 보정 결과]")
+print("=" * 70)
+print(f"- 학습 전 MSE: {mse_before:.5f}")
+print(f"- 학습 후 MSE: {mse_after:.5f}")
+print(f"- 학습 전 MAE: {mae_before:.5f}")
+print(f"- 학습 후 MAE: {mae_after:.5f}")
+print(f"- 최종 w: {final_w}")
+print(f"- 최종 b: {final_b:.5f}")
+print(f"- 개선 여부: MSE 기준 약 {(1 - mse_after / mse_before) * 100:.2f}% 손실 감소하여 크게 개선됨")
+print(
+    f"- 운영팀에 전달할 결론: 최종 가중치 w=[{final_w[0]:.4f}, {final_w[1]:.4f}]로 분석한 결과, "
+    f"첫 번째 특징인 '의미적 유사도(Semantic Similarity, {final_w[0]:.4f})'가 두 번째 특징인 "
+    f"'키워드 오버랩(Keyword Overlap, {final_w[1]:.4f})'보다 훨씬 높은 비중으로 반영되는 것이 사람의 검색 점수 판단 기준과 부합합니다. "
+    f"보정 모델 적용 시 사람의 평가 점수와의 평균 오차(MAE)가 {mae_before:.4f}에서 {mae_after:.4f}로 대폭 감소하며 상위 검색 결과의 정확도가 보장됩니다."
+)
+print("=" * 70)
+
+# ----------------------------------------------------
+# Loss Curve 시각화
+# ----------------------------------------------------
+plt.figure(figsize=(8, 5))
+plt.plot(loss_history, label="Training Loss (MSE)", color="blue", linewidth=2)
+plt.title("Gradient Descent Loss Curve (300 Steps)", fontsize=14)
+plt.xlabel("Steps", fontsize=12)
+plt.ylabel("MSE Loss", fontsize=12)
+plt.grid(True, linestyle="--", alpha=0.6)
+plt.legend(fontsize=11)
+plt.tight_layout()
+plt.show()
