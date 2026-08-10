@@ -67,3 +67,99 @@ W2   | h=[0.89 0.24] | W2=[0.7 0.4] | -0.4220 | [-0.2954 -0.1688]
 
 h → prediction → loss 경로를 거꾸로 이동할 때, 뒤에서 전달받은 dLoss/dPrediction과 현재 연산의 Local Gradient인 dPrediction/dh를 곱하여 dLoss/dh를 구합니다. 이것이 “경로 안에서는 Gradient를 곱한다”는 의미입니다.
 
+# 필수 2. 두 단계 모델의 수동 Backpropagation
+
+## ▶ 문제 2-1: 배치 Gradient 계산과 한 번의 업데이트
+
+### 업무 요청
+
+이제 네 표본 전체를 사용해 `W1`, `b1`, `W2`, `b2`의 Gradient를 계산하세요. 반복문으로 원소를 하나씩 미분하기보다 행렬곱으로 전체 배치를 처리합니다.
+
+## Forward ##
+H = X @ W1 + b1
+prediction = H @ W2 + b2
+Loss = mean((prediction - y_true)²)
+
+## Backward ##
+dPrediction = 2(prediction - y_true) / N
+
+dW2 = Hᵀ @ dPrediction
+db2 = sum(dPrediction)
+
+dH = dPrediction @ W2ᵀ
+
+dW1 = Xᵀ @ dH
+db1 = sum(dH, axis=0)
+
+### 수행해야 할 작업
+
+1. `forward_backward()` 함수 전체를 구현하세요.
+2. 모든 중간 배열의 Shape을 출력하세요.
+3. Learning Rate `0.2`로 네 파라미터를 한 번 업데이트하세요.
+4. 업데이트 전후 Loss를 비교하세요.
+5. 다음 조건을 확인하세요.
+    - `dW1.shape == W1.shape`
+    - `db1.shape == b1.shape`
+    - `dW2.shape == W2.shape`
+    - `db2.shape == b2.shape`
+    - 업데이트 후 Loss가 감소함
+
+시작 코드
+
+```bash
+def forward_backward(X, y_true, W1, b1, W2, b2):
+    """Forward 값과 모든 파라미터 Gradient를 반환하세요."""
+    #TODO
+    raise NotImplementedError
+```
+
+### 제출해야 할 보고 형식
+
+```
+[Backpropagation 검증 보고]
+- 업데이트 전 Loss:
+- 업데이트 후 Loss:
+- dW1 Shape:
+- db1 Shape:
+- dW2 Shape:
+- db2 Shape:
+- Loss 감소 여부:
+- Backpropagation과 Gradient Descent의 역할 차이:
+```
+
+- 힌트 보기
+    - `N`은 표본 수 `X.shape[0]`입니다.
+    - `db1`은 배치 축을 합치므로 `axis=0`입니다.
+    - 파라미터 업데이트는 Backpropagation이 아니라 Gradient Descent의 역할입니다.
+
+결과
+
+```bash
+======================================================================
+[필수 2-1: 전체 배치 Backpropagation 및 파라미터 업데이트]
+======================================================================
+H shape: (4, 2)
+prediction shape: (4, 1)
+dPrediction shape: (4, 1)
+dH shape: (4, 2)
+dW1 shape: (2, 2)
+db1 shape: (2,)
+dW2 shape: (2, 1)
+db2 shape: (1,)
+
+[Backpropagation 검증 보고]
+- 업데이트 전 Loss: 0.025666
+- 업데이트 후 Loss: 0.005661
+- dW1 Shape: (2, 2)
+- db1 Shape: (2,)
+- dW2 Shape: (2, 1)
+- db2 Shape: (1,)
+- Loss 감소 여부: True
+- Backpropagation과 Gradient Descent의 역할 차이:
+  * Backpropagation: 연쇄 법칙(Chain Rule)을 이용하여 각 파라미터별 Gradient를 효율적으로 계산합니다.
+  * Gradient Descent: 계산된 Gradient 방향의 반대로 파라미터를 업데이트하여 Loss를 감소시킵니다.
+```
+
+dPrediction → dH로 이동할 때 W2.T를 곱하고, dH에서 dW1을 구할 때 X.T를 곱합니다. 각 행렬곱의 Shape이 맞아야 Gradient가 원래 파라미터와 같은 Shape을 갖습니다.
+
+
