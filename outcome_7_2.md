@@ -162,4 +162,26 @@ db2 shape: (1,)
 
 dPrediction → dH로 이동할 때 W2.T를 곱하고, dH에서 dW1을 구할 때 X.T를 곱합니다. 각 행렬곱의 Shape이 맞아야 Gradient가 원래 파라미터와 같은 Shape을 갖습니다.
 
+# 심화 1. PyTorch Autograd와 수동 Gradient 비교
+
+## ▶ 문제 3-1: `backward()` 결과와 `zero_grad()` 확인
+
+### 업무 상황
+
+수동 Backpropagation이 맞는지 PyTorch Autograd로 교차검증합니다. 또한 PyTorch가 Gradient를 기본적으로 **누적**한다는 점을 확인합니다.
+
+### 수행해야 할 작업
+
+1. NumPy 데이터를 `torch.float64` Tensor로 변환하세요.
+2. 네 파라미터에 `requires_grad=True`를 설정하세요.
+3. 같은 Forward와 MSE를 구현하고 `loss.backward()`를 호출하세요.
+4. 수동 Gradient와 최대 절대 차이를 비교하세요.
+5. `zero_grad()` 없이 같은 Forward/Backward를 한 번 더 수행해 Gradient가 누적되는지 확인하세요.
+6. `zero_grad()`를 호출한 뒤 Gradient가 초기화되는지 확인하세요.
+
+힌트 보기
+    - 두 번째 `backward()`를 호출하기 전에 **Forward를 다시 계산**하면 새 계산 그래프가 만들어집니다.
+    - `tensor.grad.zero_()` 또는 Optimizer의 `zero_grad()`로 Gradient를 초기화할 수 있습니다.
+    - NumPy 비교 전에는 `.detach().numpy()`를 사용하세요.
+
 

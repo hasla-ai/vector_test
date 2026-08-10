@@ -141,3 +141,52 @@ print(f"- Loss 감소 여부: {loss_after < manual_result['loss']}")
 print("- Backpropagation과 Gradient Descent의 역할 차이:")
 print("  * Backpropagation: 연쇄 법칙(Chain Rule)을 이용하여 각 파라미터별 Gradient를 효율적으로 계산합니다.")
 print("  * Gradient Descent: 계산된 Gradient 방향의 반대로 파라미터를 업데이트하여 Loss를 감소시킵니다.")
+
+# ----------------------------------------------------
+# 심화 1. PyTorch Autograd와 수동 Gradient 비교 (문제 3-1)
+# ----------------------------------------------------
+print("\n" + "=" * 70)
+print("[심화 3-1: PyTorch Autograd 교차검증 및 누적/초기화 확인]")
+print("=" * 70)
+
+# 1) NumPy 데이터를 PyTorch float64 Tensor로 변환 및 requires_grad=True 설정
+X_t = torch.tensor(X, dtype=torch.float64)
+y_true_t = torch.tensor(y_true, dtype=torch.float64)
+
+W1_t = torch.tensor(W1, dtype=torch.float64, requires_grad=True)
+b1_t = torch.tensor(b1, dtype=torch.float64, requires_grad=True)
+W2_t = torch.tensor(W2, dtype=torch.float64, requires_grad=True)
+b2_t = torch.tensor(b2, dtype=torch.float64, requires_grad=True)
+
+# 2) 1회차 Forward & Backward
+H_t = X_t @ W1_t + b1_t
+pred_t = H_t @ W2_t + b2_t
+loss_t = torch.mean((pred_t - y_true_t) ** 2)
+loss_t.backward()
+
+# 수동 Gradient와 최대 절대 차이 비교
+diff_dW1 = np.max(np.abs(manual_result["dW1"] - W1_t.grad.detach().numpy()))
+diff_db1 = np.max(np.abs(manual_result["db1"] - b1_t.grad.detach().numpy()))
+diff_dW2 = np.max(np.abs(manual_result["dW2"] - W2_t.grad.detach().numpy()))
+diff_db2 = np.max(np.abs(manual_result["db2"] - b2_t.grad.detach().numpy()))
+max_diff = max(diff_dW1, diff_db1, diff_dW2, diff_db2)
+
+print(f"1) 수동 Gradient vs PyTorch Autograd 최대 절대 차이: {max_diff:.2e}")
+
+# 3) zero_grad() 없이 2회차 Forward & Backward (Gradient 누적 확인)
+dW1_pass1 = W1_t.grad.clone()
+H_t2 = X_t @ W1_t + b1_t
+pred_t2 = H_t2 @ W2_t + b2_t
+loss_t2 = torch.mean((pred_t2 - y_true_t) ** 2)
+loss_t2.backward()
+
+print(f"2) zero_grad() 미호출 시 2회차 W1.grad (1회차의 정확히 2배): {W1_t.grad[0, 0].item():.6f} (1회차: {dW1_pass1[0, 0].item():.6f})")
+
+# 4) zero_grad() 호출 후 초기화 확인
+W1_t.grad.zero_()
+b1_t.grad.zero_()
+W2_t.grad.zero_()
+b2_t.grad.zero_()
+
+print(f"3) zero_grad() 호출 후 W1.grad 노름(Norm): {torch.norm(W1_t.grad).item():.6f}")
+print("=" * 70)
